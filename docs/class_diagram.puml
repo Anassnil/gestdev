@@ -1,0 +1,386 @@
+@startuml GestDev Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam groupInheritance 2
+
+' ============================================================
+'  PACKAGE: Authentication & Users
+' ============================================================
+package "Auth" #DDECEF {
+
+  class User {
+    +id : int
+    +name : string
+    +email : string
+    +password : string {hashed}
+    +email_verified_at : datetime
+    +remember_token : string
+    +created_at : datetime
+    +updated_at : datetime
+  }
+
+}
+
+' ============================================================
+'  PACKAGE: Project Management
+' ============================================================
+package "Project Management" #E8F5E9 {
+
+  class Board {
+    +id : int
+    +user_id : int
+    +name : string
+    +description : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +tasks() : HasMany<Task>
+    +sprints() : HasMany<Sprint>
+    +releases() : HasMany<Release>
+    +requirements() : HasMany<Requirement>
+  }
+
+  class Task {
+    +id : int
+    +board_id : int
+    +sprint_id : int
+    +assignee_id : int
+    +title : string
+    +description : string
+    +status : string
+    +position : int
+    +priority : string
+    +points : int
+    +type : string
+    +due_date : date
+    +dependencies : json
+    +tags : json
+    +quadrant : string
+    +pr_url : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +board() : BelongsTo<Board>
+    +assignee() : BelongsTo<User>
+  }
+
+  class Sprint {
+    +id : int
+    +board_id : int
+    +title : string
+    +start_at : date
+    +end_at : date
+    +capacity_points : int
+    +active : boolean
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +board() : BelongsTo<Board>
+    +tasks() : HasMany<Task>
+  }
+
+  class Release {
+    +id : int
+    +board_id : int
+    +title : string
+    +description : string
+    +type : string
+    +version : string
+    +target_date : date
+    +priority : string
+    +status : string
+    +position : int
+    +meta : json
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +board() : BelongsTo<Board>
+  }
+
+  class Requirement {
+    +id : int
+    +board_id : int
+    +parent_id : int
+    +title : string
+    +description : string
+    +type : string
+    +priority : string
+    +status : string
+    +tags : json
+    +linked_feature_id : int
+    +linked_feature_type : string
+    +position : int
+    +created_by : int
+    +version : string
+    +estimate : int
+    +acceptance_criteria : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +board() : BelongsTo<Board>
+    +parent() : BelongsTo<Requirement>
+    +children() : HasMany<Requirement>
+    +tasks() : BelongsToMany<Task>
+    +creator() : BelongsTo<User>
+    +linkedFeature() : MorphTo
+  }
+
+  class Roadmap {
+    +id : int
+    +board_id : int
+    +title : string
+    +description : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +board() : BelongsTo<Board>
+    +milestones() : HasMany<Milestone>
+  }
+
+  class Milestone {
+    +id : int
+    +roadmap_id : int
+    +title : string
+    +notes : string
+    +due_at : date
+    +completed : boolean
+    +position : int
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +roadmap() : BelongsTo<Roadmap>
+  }
+
+  class Diagram {
+    +id : int
+    +board_id : int
+    +type : string
+    +title : string
+    +image : string
+    +code : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +board() : BelongsTo<Board>
+  }
+}
+
+' ============================================================
+'  PACKAGE: AI Model Lifecycle
+' ============================================================
+package "AI Model Lifecycle" #FFF3E0 {
+
+  class AIModel {
+    +id : int
+    +name : string
+    +type : string
+    +status : string
+    +description : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +versions() : HasMany<ModelVersion>
+    +experiments() : HasMany<Experiment>
+  }
+
+  class ModelVersion {
+    +id : int
+    +ai_model_id : int
+    +version : string
+    +config : json
+    +status : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +model() : BelongsTo<AIModel>
+    +deployments() : HasMany<Deployment>
+  }
+
+  class Dataset {
+    +id : int
+    +name : string
+    +type : string
+    +path : string
+    +metadata : json
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +experiments() : HasMany<Experiment>
+  }
+
+  class Experiment {
+    +id : int
+    +ai_model_id : int
+    +dataset_id : int
+    +status : string
+    +started_at : datetime
+    +ended_at : datetime
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +model() : BelongsTo<AIModel>
+    +dataset() : BelongsTo<Dataset>
+    +trainingRuns() : HasMany<TrainingRun>
+  }
+
+  class TrainingRun {
+    +id : int
+    +experiment_id : int
+    +parameters : json
+    +status : string
+    +started_at : datetime
+    +ended_at : datetime
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +experiment() : BelongsTo<Experiment>
+    +metrics() : HasMany<Metric>
+  }
+
+  class Metric {
+    +id : int
+    +training_run_id : int
+    +name : string
+    +value : float
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +trainingRun() : BelongsTo<TrainingRun>
+  }
+
+  class Deployment {
+    +id : int
+    +model_version_id : int
+    +environment : string
+    +status : string
+    +endpoint_url : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +version() : BelongsTo<ModelVersion>
+    +logs() : HasMany<DeploymentLog>
+  }
+
+  class DeploymentLog {
+    +id : int
+    +deployment_id : int
+    +message : string
+    +level : string
+    +created_at : datetime
+    +updated_at : datetime
+    --
+    +deployment() : BelongsTo<Deployment>
+  }
+}
+
+' ============================================================
+'  PACKAGE: AI Planning
+' ============================================================
+package "AI Planning" #F3E5F5 {
+
+  class AIPlan {
+    +id : int
+    +board_id : int
+    +title : string
+    +input_text : string
+    +result_json : json
+    +created_at : datetime
+    +updated_at : datetime
+  }
+}
+
+' ============================================================
+'  PACKAGE: Services
+' ============================================================
+package "Services" #ECEFF1 {
+
+  class ModelRegistry <<Service>> {
+    +register(model : AIModel) : AIModel
+    +addVersion(model : AIModel, config : array, version : string) : ModelVersion
+    +getVersions(modelId : int) : Collection<ModelVersion>
+  }
+
+  class EvaluationService <<Service>> {
+    +evaluate(run : TrainingRun) : array
+    +compare(a : Experiment, b : Experiment) : array
+    -pseudoRand(seed : int) : float
+  }
+
+  class MonitoringService <<Service>> {
+    +trackPerformance(deployment : Deployment) : array
+    +detectAnomalies(deployment : Deployment) : array
+  }
+
+  class LLMService <<Service>> {
+    -config : array
+    +generate(prompt : string, options : array) : array
+  }
+
+  class AIPlanningService <<Service>> {
+    -llm : LLMService
+    #extractJson(text : string) : array
+    #callModel(instruction : string, opts : array) : array
+    #validateSchema(data : array) : bool
+  }
+}
+
+' ============================================================
+'  RELATIONSHIPS — Project Management
+' ============================================================
+
+User "1" --o "0..*" Board : owns >
+Board "1" *-- "0..*" Task : contains >
+Board "1" *-- "0..*" Sprint : contains >
+Board "1" *-- "0..*" Release : contains >
+Board "1" *-- "0..*" Requirement : contains >
+Board "1" -- "0..*" Roadmap
+Board "1" -- "0..*" Diagram
+
+Sprint "0..1" o-- "0..*" Task : groups >
+User "0..1" -- "0..*" Task : assigned >
+
+Roadmap "1" *-- "0..*" Milestone : contains >
+
+Requirement "0..1" -- "0..*" Requirement : parent / children >
+Requirement "0..*" -- "0..*" Task : requirement_task >
+Requirement "0..*" -- "0..1" User : created by >
+
+' ============================================================
+'  RELATIONSHIPS — AI Lifecycle
+' ============================================================
+
+AIModel "1" *--- "0..*" ModelVersion : versions >
+AIModel "1" *--- "0..*" Experiment : experiments >
+
+Dataset "1" o--- "0..*" Experiment : trains on >
+
+Experiment "1" *--- "0..*" TrainingRun : runs >
+TrainingRun "1" *--- "0..*" Metric : records >
+
+ModelVersion "1" *--- "0..*" Deployment : deployed as >
+Deployment "1" *--- "0..*" DeploymentLog : logs >
+
+' ============================================================
+'  RELATIONSHIPS — AI Planning
+' ============================================================
+
+Board "1" -- "0..*" AIPlan : plans >
+
+' ============================================================
+'  SERVICE DEPENDENCIES
+' ============================================================
+
+ModelRegistry ..> AIModel : manages
+ModelRegistry ..> ModelVersion : creates
+
+EvaluationService ..> TrainingRun : evaluates
+EvaluationService ..> Metric : creates
+EvaluationService ..> Experiment : compares
+
+MonitoringService ..> Deployment : monitors
+
+AIPlanningService --> LLMService : uses
+AIPlanningService ..> AIPlan : produces
+
+@enduml
