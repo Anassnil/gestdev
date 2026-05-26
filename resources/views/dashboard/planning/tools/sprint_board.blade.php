@@ -2,6 +2,7 @@
 
 @section('dashboard-content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('dashboard.planning._permission')
 
     @php
         // Ensure payloads exist (defensive - may be provided earlier)
@@ -267,9 +268,11 @@
                         <option value="all">All Agents</option>
                         @foreach($developers as $d) <option value="{{ $d->id }}">{{ $d->name }}</option> @endforeach
                     </select>
-                    <button id="open-task-inject" class="bg-white text-black p-3 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-xl shadow-indigo-500/10 flex items-center justify-center">
+                    @if(!empty($BOARD_CAN_EDIT))
+                        <button id="open-task-inject" class="bg-white text-black p-3 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-xl shadow-indigo-500/10 flex items-center justify-center">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 4v16m8-8H4"/></svg>
-                    </button>
+                        </button>
+                    @endif
                     <a href="{{ route('dashboard.planning.show', $board) }}" class="flex items-center gap-2 px-5 py-2 glass-module rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all" style="border:1px solid rgba(255,255,255,0.06);">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                         Board
@@ -309,7 +312,8 @@
     <script>
     document.addEventListener('DOMContentLoaded', function(){
         const boardId = {{ $board->id }};
-        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const CAN_EDIT = Boolean(window.CAN_EDIT);
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         let tasks = @json($tasksPayload);
         const developers = @json($devsPayload);
         const sprints = @json($sprintsPayload);
@@ -357,10 +361,10 @@
                                         ${renderAssigneeOptions(t.assignee)}
                                     </select>
                                 </div>
-                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button data-action="save" class="text-blue-500 hover:text-white transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg></button>
-                                    <button data-action="delete" class="text-red-500 hover:text-white transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" stroke-width="3"/></svg></button>
-                                </div>
+                                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    ${ CAN_EDIT ? '<button data-action="save" class="text-blue-500 hover:text-white transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="3"/></svg></button>' : '' }
+                                                    ${ CAN_EDIT ? '<button data-action="delete" class="text-red-500 hover:text-white transition-colors"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7" stroke-width="3"/></svg></button>' : '' }
+                                                </div>
                             </div>
 
                             <div class="mt-2">
@@ -371,8 +375,10 @@
                     </div>
                 `;
 
-                card.querySelector('[data-action="save"]').addEventListener('click', ()=> saveCard(card));
-                card.querySelector('[data-action="delete"]').addEventListener('click', ()=> deleteCard(card));
+                const saveBtn = card.querySelector('[data-action="save"]');
+                const delBtn = card.querySelector('[data-action="delete"]');
+                if(saveBtn) saveBtn.addEventListener('click', ()=> saveCard(card));
+                if(delBtn) delBtn.addEventListener('click', ()=> deleteCard(card));
 
                 const target = cols[t.status] ?? cols.todo;
                 target.appendChild(card);
@@ -431,36 +437,41 @@
         }
 
         Object.values(cols).forEach(colEl => {
-            Sortable.create(colEl, {
-                group: 'kanban',
-                animation: 250,
-                onAdd: async function(evt){
+            const options = { group: 'kanban', animation: 250, sort: CAN_EDIT, draggable: '.task-card' };
+            if(CAN_EDIT){
+                options.onAdd = async function(evt){
                     const id = evt.item.dataset.id;
                     const status = evt.to.dataset.status;
                     await fetch(`/dashboard/planning/${id}/move`,{ method:'POST', headers: {'Content-Type':'application/json','X-CSRF-TOKEN':token}, body: JSON.stringify({ status: status, position: evt.newIndex + 1 }) });
                     tasks = tasks.map(t => String(t.id)===String(id) ? Object.assign({}, t, { status: status }) : t);
                     render();
-                }
-            });
+                };
+            }
+            Sortable.create(colEl, options);
         });
 
-        document.getElementById('createForm').addEventListener('submit', async function(e){
+        const createForm = document.getElementById('createForm');
+        if(createForm){
+            createForm.addEventListener('submit', async function(e){
             e.preventDefault();
             const fd = new FormData(this);
             const res = await fetch(`/dashboard/planning/${boardId}/tasks`,{ method:'POST', headers: {'X-CSRF-TOKEN':token,'Accept':'application/json'}, body: new URLSearchParams(fd) });
             if(res.ok){ const data = await res.json(); tasks.unshift(data.task ?? data); this.reset(); render(); }
-        });
+            });
+        }
 
         document.getElementById('filterSprint').addEventListener('change', function(){ activeSprint = this.value; render(); });
         document.getElementById('filterAssignee').addEventListener('change', function(){ activeAssignee = this.value; render(); });
 
         render();
 
-        // Task Inject modal
+        // Task Inject modal (guarded)
         const tiModal = document.getElementById('task-inject-modal');
-        document.getElementById('open-task-inject').onclick = () => tiModal.classList.remove('hidden');
-        document.getElementById('close-task-inject').onclick = () => tiModal.classList.add('hidden');
-        tiModal.addEventListener('click', e => { if (e.target === tiModal) tiModal.classList.add('hidden'); });
+        const openTiBtn = document.getElementById('open-task-inject');
+        const closeTiBtn = document.getElementById('close-task-inject');
+        if(openTiBtn && tiModal) openTiBtn.addEventListener('click', ()=> tiModal.classList.remove('hidden'));
+        if(closeTiBtn && tiModal) closeTiBtn.addEventListener('click', ()=> tiModal.classList.add('hidden'));
+        if(tiModal) tiModal.addEventListener('click', e => { if (e.target === tiModal) tiModal.classList.add('hidden'); });
 
         requestAnimationFrame(() => {
             const page = document.getElementById('sprint-board-page');
@@ -470,6 +481,7 @@
     </script>
 @endsection
 
+@if(!empty($BOARD_CAN_EDIT))
 @push('modals')
 <div id="task-inject-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4" style="backdrop-filter:blur(12px);background:rgba(0,0,0,0.65);">
     <div id="task-inject-panel" class="relative w-full max-w-md rounded-[2rem] p-8 border border-white/10 shadow-2xl" style="background:rgba(10,11,40,0.92);backdrop-filter:blur(20px);">
@@ -505,9 +517,9 @@
             <p id="ti-protocol-text" style="font-size:10px;color:rgba(255,255,255,0.3);line-height:1.6;text-transform:uppercase;letter-spacing:0.05em;">Drag units between sectors to update status. Changes propagate through the uplink in real-time.</p>
         </div>
     </div>
-</div>
+    </div>
 
-<style>
+    <style>
 [data-theme="light"] #task-inject-modal { background: rgba(0,0,0,0.35) !important; }
 [data-theme="light"] #task-inject-panel {
     background: #ffffff !important;
@@ -530,3 +542,4 @@
 [data-theme="light"] #open-task-inject:hover { background: #6366f1 !important; color: #fff !important; }
 </style>
 @endpush
+@endif

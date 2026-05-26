@@ -1,5 +1,6 @@
 
 <div id="diagram-hub-section" class="mt-12">
+    {{-- debug CSS removed --}}
     <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         @if($showHeader ?? true)
             <div>
@@ -10,11 +11,15 @@
         
         @if($showControls ?? true)
             <div class="flex gap-3">
-                <button id="diagram-create-inline" class="btn-hub px-6 py-3 bg-white text-black rounded-xl hover:bg-blue-500 hover:text-white transition-all">
-                    Create Node
-                </button>
-                <button id="ai-open-btn" class="btn-hub px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-500 transition-all">AI Suggestions</button>
-                <a href="https://plantuml.com/fr/" target="_blank" rel="noopener" class="btn-hub px-6 py-3 bg-gray-800 text-white border border-white/10 rounded-xl hover:bg-gray-900 flex items-center">
+                @if(auth()->check() && $board->canEdit(auth()->user()))
+                    <button id="diagram-create-inline" class="btn-hub px-6 py-3 bg-white text-black rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                        Create Node
+                    </button>
+                @endif
+                @if(auth()->check() && $board->canEdit(auth()->user()))
+                    <button id="ai-open-btn" class="btn-hub px-4 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-500 transition-all">AI Suggestions</button>
+                @endif
+                <a href="https://www.planttext.com/" target="_blank" rel="noopener" class="btn-hub px-6 py-3 bg-gray-800 text-white border border-white/10 rounded-xl hover:bg-gray-900 flex items-center">
                     <!-- Inline PlantUML icon SVG to avoid cross-origin blocking -->
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke-width="1.5" />
@@ -37,9 +42,10 @@
                  style="animation-delay: {{ $index * 0.1 }}s"
                  data-id="{{ $diagram->id }}" 
                  data-title="{{ htmlspecialchars($diagram->title, ENT_QUOTES) }}" 
-                 data-type="{{ $diagram->type }}" 
-                 data-code="{{ htmlspecialchars($diagram->code ?? '', ENT_QUOTES) }}" 
-                 data-image="{{ $diagram->image }}">
+                  data-type="{{ $diagram->type }}" 
+                  data-code="{{ htmlspecialchars($diagram->code ?? '', ENT_QUOTES) }}" 
+                  data-image="{{ $diagram->image }}"
+                  data-description="{{ htmlspecialchars($diagram->description ?? '', ENT_QUOTES) }}">
                 
                 <div class="diagram-image-wrapper mb-4 bg-black/20 rounded-2xl h-44 overflow-hidden relative">
                     @if($diagram->image)
@@ -57,12 +63,24 @@
                 <div class="px-1">
                     <div class="text-white font-bold text-lg leading-tight group-hover:text-blue-400 transition-colors uppercase italic truncate">{{ $diagram->title }}</div>
                     
+                    <div class="mt-2 text-xs text-white/40">
+                        <span>By: {{ $diagram->creator?->name ?? 'Unknown' }}</span>
+                        <span class="mx-2">·</span>
+                        <span>{{ $diagram->created_at->diffForHumans() }}</span>
+                        @if($diagram->updated_at && $diagram->updated_at->gt($diagram->created_at))
+                            <span class="mx-2">·</span>
+                            <span>Updated: {{ $diagram->updater?->name ?? 'Unknown' }} {{ $diagram->updated_at->diffForHumans() }}</span>
+                        @endif
+                    </div>
+
                     <div class="mt-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
                         <button data-id="{{ $diagram->id }}" class="diagram-open btn-hub flex-1 py-2 bg-blue-600 text-white rounded-lg">View</button>
-                        <button data-id="{{ $diagram->id }}" class="diagram-edit btn-hub p-2 bg-white/5 text-white/40 rounded-lg hover:text-white">Edit</button>
-                        <button data-id="{{ $diagram->id }}" class="diagram-delete btn-hub p-2 text-red-500/40 hover:text-red-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" /></svg>
-                        </button>
+                        @if(auth()->check() && $board->canEdit(auth()->user()))
+                            <button data-id="{{ $diagram->id }}" class="diagram-edit btn-hub p-2 bg-white/5 text-white/40 rounded-lg hover:text-white">Edit</button>
+                            <button data-id="{{ $diagram->id }}" class="diagram-delete btn-hub p-2 text-red-500/40 hover:text-red-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" /></svg>
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -117,6 +135,11 @@
                                 <input name="type" id="diagram-type-inline" type="text" placeholder="e.g. class, sequence, er"
                                     class="w-full mt-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors" />
                             </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-blue-400 uppercase tracking-widest ml-1">Description <span class="text-[10px] font-normal text-white/30">(optional)</span></label>
+                                <textarea name="description" id="diagram-description-inline" rows="3" placeholder="Optional description"
+                                    class="w-full mt-1.5 bg-[#1a1a1a] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"></textarea>
+                            </div>
                         </div>
                     </div>
 
@@ -128,30 +151,36 @@
                         </div>
 
                         <!-- Editor Container -->
-                        <div class="relative flex-grow min-h-[450px] rounded-xl border border-white/10 bg-white/5 overflow-hidden shadow-inner font-mono text-[13px] leading-relaxed">
+                        <div id="diagram-editor-container" class="relative flex flex-col flex-grow min-h-[450px] rounded-xl border border-white/10 bg-white/5 overflow-hidden shadow-inner font-mono text-[13px] leading-relaxed">
 
-                            <!-- Tab Bar -->
-                            <div class="flex bg-white/5 border-b border-white/10">
-                                <div class="bg-transparent px-4 py-2 text-white/80 border-t border-t-blue-500 flex items-center gap-2 text-xs">
-                                    <span class="text-blue-400">PU</span> diagram.puml
+                            <!-- Toolbar -->
+                            <div class="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-transparent px-3 py-1 text-white/80 flex items-center gap-2 text-xs rounded-md">
+                                        <span class="text-blue-400">PU</span>
+                                        <span class="text-[12px] font-black">diagram.puml</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button id="editor-toggle-wrap" type="button" class="text-xs px-3 py-1 bg-white/3 rounded-md text-white/80 hover:bg-white/5">Toggle Wrap</button>
+                                    <button id="editor-copy-btn" type="button" class="text-xs px-3 py-1 bg-white/3 rounded-md text-white/80 hover:bg-white/5">Copy</button>
+                                    <button id="editor-theme-toggle" type="button" class="text-xs px-3 py-1 bg-white/3 rounded-md text-white/80 hover:bg-white/5">Light Mode</button>
                                 </div>
                             </div>
 
                             <!-- Editor Body -->
-                            <div class="flex h-full">
-                                <!-- Line Numbers -->
-                                <div id="diagram-line-numbers" class="w-12 bg-transparent text-right pr-3 py-4 text-white/30 select-none border-r border-white/10 text-xs leading-[1.75rem] overflow-hidden">
-                                    1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12<br>13<br>14<br>15<br>16
-                                </div>
+                            <div class="flex-1 min-h-0 flex">
+                                <!-- Line numbers removed -->
 
                                 <!-- Textarea -->
                                 <textarea name="code" id="diagram-code-inline"
-                                    class="w-full h-full px-4 py-4 bg-transparent outline-none resize-none text-[#ce9178] caret-blue-500 placeholder:text-white/10 text-[13px] leading-[1.75rem]"
+                                    class="w-full h-full px-4 py-4 bg-transparent outline-none resize-none text-[#ce9178] caret-blue-500 placeholder:text-white/10 text-[13px] leading-[1.75rem] overflow-auto min-h-0" 
+                                    style="overflow:auto; height:100%;"
                                     spellcheck="false"
                                     placeholder="// Paste or write your PlantUML here..."></textarea>
 
-                                <!-- Syntax highlight overlay (hidden by default) -->
-                                <pre id="diagram-code-preview" class="hidden absolute inset-0 overflow-auto px-4 py-4 m-0 bg-transparent pointer-events-none"><code id="diagram-code-preview-code" class="language-javascript text-[13px] leading-[1.75rem]"></code></pre>
+                                <!-- Syntax highlight preview (hidden by default). Use flex so it can scroll in view mode -->
+                                <pre id="diagram-code-preview" class="hidden flex-1 overflow-auto px-4 py-4 m-0 bg-transparent"><code id="diagram-code-preview-code" class="language-javascript text-[13px] leading-[1.75rem]"></code></pre>
                             </div>
                         </div>
 
@@ -318,6 +347,11 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+    if(window.__diagramHubInit){
+        console.warn('DiagramHub script already initialized; skipping duplicate init.');
+        return;
+    }
+    window.__diagramHubInit = true;
     const DIAGRAMS_BASE = "{{ route('dashboard.planning.diagrams.index', $board) }}";
     const CSRF = "{{ csrf_token() }}";
     const AI_GENERATE_URL = "{{ route('ai.generateUML') }}";
@@ -328,16 +362,43 @@ document.addEventListener('DOMContentLoaded', function(){
     const aiCloseBtn = document.getElementById('ai-close-btn');
     const aiCancelBtn = document.getElementById('ai-cancel-btn');
 
-    // Ensure Prism is present
+    // Ensure Prism is present and allow dynamic theme switching
+    let _prismThemeLink = null;
+    function setPrismTheme(dark = true){
+        try{
+            if(!_prismThemeLink){
+                _prismThemeLink = document.createElement('link');
+                _prismThemeLink.rel = 'stylesheet';
+                document.head.appendChild(_prismThemeLink);
+            }
+            _prismThemeLink.href = dark
+                ? 'https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-one-dark.min.css'
+                : 'https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-solarizedlight.min.css';
+        }catch(e){ console.warn('prism theme swap failed', e); }
+    }
+
     if(!window.Prism){
-        const theme = document.createElement('link');
-        theme.rel = 'stylesheet';
-        theme.href = 'https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-one-dark.min.css';
-        document.head.appendChild(theme);
+        setPrismTheme(true);
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js';
         document.head.appendChild(script);
+    } else {
+        setPrismTheme(true);
     }
+
+    // Inject light-mode editor CSS for the inline editor toggle
+    try{
+        const _editorLightStyle = document.createElement('style');
+        _editorLightStyle.textContent = `
+            #diagram-editor-container.editor-light{ background:#ffffff; color:#0b1220; border-color:rgba(0,0,0,0.08); }
+            #diagram-editor-container.editor-light .border-r{ border-color:rgba(0,0,0,0.04); }
+            #diagram-editor-container.editor-light textarea{ color:#0b1220; background:transparent; }
+            #diagram-editor-container.editor-light .px-4{ color:#0b1220; }
+        `;
+        document.head.appendChild(_editorLightStyle);
+    }catch(e){ /* ignore */ }
+
+    // (line numbers removed) remove related scrollbar-hiding CSS
 
     function openModal(mode = 'view', data = {}) {
         const isView = mode === 'view';
@@ -346,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function(){
         document.getElementById('diagram-title-inline').value = data.title || '';
         document.getElementById('diagram-type-inline').value = data.type || '';
         document.getElementById('diagram-code-inline').value = data.code || '';
+        document.getElementById('diagram-description-inline').value = data.description || '';
         
         const previewImg = document.getElementById('diagram-image-preview-img');
         const codeInput = document.getElementById('diagram-code-inline');
@@ -386,6 +448,8 @@ document.addEventListener('DOMContentLoaded', function(){
             }
             document.querySelectorAll('#diagram-form-inline input').forEach(i => i.readOnly = false);
         }
+
+        // line numbers removed — no dynamic numbering needed
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -428,6 +492,7 @@ document.addEventListener('DOMContentLoaded', function(){
         const delBtn = e.target.closest('.diagram-delete');
         if(!delBtn) return;
         e.stopPropagation();
+        console.trace('diagram delete clicked');
         const id = delBtn.getAttribute('data-id');
         if(!id) return;
         if(!confirm('Delete this diagram? This cannot be undone.')) return;
@@ -440,7 +505,10 @@ document.addEventListener('DOMContentLoaded', function(){
             }
         })
         .then(res => {
-            if(!res.ok) throw new Error('Delete failed');
+            if(!res.ok) {
+                console.error('Delete request returned non-OK:', res.status, res.statusText);
+                return res.text().then(t => { console.error('Delete response body:', t); throw new Error('Delete failed: ' + res.status); });
+            }
             return res.json();
         })
         .then(payload => {
@@ -477,6 +545,7 @@ document.addEventListener('DOMContentLoaded', function(){
     let historyLoaded = false;
     let selectedDiagramType = 'class';
     let refineMode = false;
+    let isSubmitting = false; // prevent duplicate form submissions
 
     // ── Diagram type selector ───────────────────────────────────────
     const TYPE_META = {
@@ -511,6 +580,57 @@ document.addEventListener('DOMContentLoaded', function(){
             qp.appendChild(btn);
         });
     }
+
+    // Editor toolbar actions: theme toggle, copy, wrap
+    const editorContainer = document.getElementById('diagram-editor-container');
+    const editorThemeToggle = document.getElementById('editor-theme-toggle');
+    const editorCopyBtn = document.getElementById('editor-copy-btn');
+    const editorToggleWrap = document.getElementById('editor-toggle-wrap');
+    const codeInputEl = document.getElementById('diagram-code-inline');
+    let editorIsLight = false;
+    let wrapEnabled = true;
+
+    function updateEditorThemeButton(){
+        if(editorIsLight) editorThemeToggle.textContent = 'Dark Mode';
+        else editorThemeToggle.textContent = 'Light Mode';
+    }
+
+    // initialize editor theme button label
+    try{ updateEditorThemeButton(); }catch(e){}
+
+    editorThemeToggle && editorThemeToggle.addEventListener('click', () => {
+        editorIsLight = !editorIsLight;
+        editorContainer.classList.toggle('editor-light', editorIsLight);
+        setPrismTheme(!editorIsLight ? true : false);
+        updateEditorThemeButton();
+    });
+
+    editorCopyBtn && editorCopyBtn.addEventListener('click', () => {
+        try {
+            navigator.clipboard.writeText(codeInputEl.value || '');
+            editorCopyBtn.textContent = 'Copied';
+            setTimeout(() => editorCopyBtn.textContent = 'Copy', 1200);
+        } catch(e){
+            alert('Copy failed — please select and copy manually');
+        }
+    });
+
+    editorToggleWrap && editorToggleWrap.addEventListener('click', () => {
+        wrapEnabled = !wrapEnabled;
+        codeInputEl.style.whiteSpace = wrapEnabled ? 'pre-wrap' : 'pre';
+        editorToggleWrap.textContent = wrapEnabled ? 'Toggle Wrap' : 'No Wrap';
+    });
+
+    // Sync preview and textarea scrolling (line numbers removed)
+    try{
+        const previewEl = document.getElementById('diagram-code-preview');
+        if(codeInputEl && previewEl){
+            codeInputEl.addEventListener('scroll', () => { previewEl.scrollTop = codeInputEl.scrollTop; });
+            previewEl.addEventListener('scroll', () => { codeInputEl.scrollTop = previewEl.scrollTop; });
+        }
+    }catch(e){ console.warn('scroll sync failed', e); }
+
+    // Line numbering removed — no dynamic numbering needed
 
     document.getElementById('ai-type-selector').addEventListener('click', e => {
         const btn = e.target.closest('.ai-type-btn');
@@ -801,24 +921,34 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     // Lightbox Functionality: only open when image-input is not visible (view mode)
-    document.getElementById('diagram-image-preview').onclick = (e) => {
-        const imgInputWrap = document.getElementById('diagram-image-input-wrap');
-        if(imgInputWrap && !imgInputWrap.classList.contains('hidden')) {
-            // input visible (edit mode) -> don't open lightbox; let file input handle clicks
-            return;
-        }
-        const src = document.getElementById('diagram-image-preview-img').src;
-        if(src && !src.endsWith('/')) {
-            document.getElementById('lightbox-img').src = src;
-            lightbox.classList.remove('hidden');
-            setTimeout(() => lightbox.classList.add('active'), 10);
-        }
-    };
+    (function(){
+        const previewEl = document.getElementById('diagram-image-preview');
+        if(!previewEl) return;
+        previewEl.onclick = (e) => {
+            const imgInputWrap = document.getElementById('diagram-image-input-wrap');
+            if(imgInputWrap && !imgInputWrap.classList.contains('hidden')) {
+                // input visible (edit mode) -> don't open lightbox; let file input handle clicks
+                return;
+            }
+            const imgEl = document.getElementById('diagram-image-preview-img');
+            const src = imgEl ? imgEl.src : null;
+            if(src && !src.endsWith('/')) {
+                const lbImg = document.getElementById('lightbox-img');
+                if(lbImg) lbImg.src = src;
+                if(lightbox) {
+                    lightbox.classList.remove('hidden');
+                    setTimeout(() => lightbox.classList.add('active'), 10);
+                }
+            }
+        };
+    })();
 
-    lightbox.onclick = () => {
-        lightbox.classList.remove('active');
-        setTimeout(() => lightbox.classList.add('hidden'), 400);
-    };
+    if(lightbox) {
+        lightbox.onclick = () => {
+            lightbox.classList.remove('active');
+            setTimeout(() => lightbox.classList.add('hidden'), 400);
+        };
+    }
 
     // File input change -> preview selected image immediately
     const imageInput = document.getElementById('diagram-image-inline');
@@ -863,13 +993,23 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     }
 
-    document.getElementById('diagram-close-x').onclick = () => {
-        modal.classList.remove('modal-active');
-        setTimeout(() => modal.classList.add('hidden'), 300);
-    };
-    document.getElementById('diagram-cancel-inline').onclick = () => document.getElementById('diagram-close-x').click();
-    
-    document.getElementById('diagram-create-inline').onclick = () => openModal('create', {});
+    const closeX = document.getElementById('diagram-close-x');
+    if(closeX){
+        closeX.onclick = () => {
+            if(modal) modal.classList.remove('modal-active');
+            setTimeout(() => { if(modal) modal.classList.add('hidden'); }, 300);
+        };
+    }
+
+    const cancelBtn = document.getElementById('diagram-cancel-inline');
+    if(cancelBtn && closeX){
+        cancelBtn.onclick = () => closeX.click();
+    }
+
+    const createBtn = document.getElementById('diagram-create-inline');
+    if(createBtn){
+        createBtn.onclick = () => openModal('create', {});
+    }
     // PlantUML logo fallback: if external image fails, show inline SVG
     (function(){
         const img = document.getElementById('plantuml-logo-img');
@@ -886,6 +1026,10 @@ document.addEventListener('DOMContentLoaded', function(){
     if(formEl){
         formEl.addEventListener('submit', function(e){
             e.preventDefault();
+            console.trace('diagram form submit');
+            if(isSubmitting) { console.warn('submit ignored, already submitting'); return; } // already in progress
+            isSubmitting = true;
+
             const btn = document.getElementById('diagram-save-inline');
             if(btn) { btn.disabled = true; btn.textContent = btn.getAttribute('data-loading-text') || 'Syncing...'; }
 
@@ -894,6 +1038,8 @@ document.addEventListener('DOMContentLoaded', function(){
             let url = DIAGRAMS_BASE;
             if(id){ fd.append('_method','PATCH'); url = `${DIAGRAMS_BASE}/${id}`; }
 
+            // log minimal payload keys for debugging duplicate submissions
+            try { console.log('diagram submit payload keys:', Array.from(fd.keys())); } catch(e){}
             fetch(url, { method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF }, body: fd })
                 .then(res => {
                     if(!res.ok) throw new Error('Save failed');
@@ -908,6 +1054,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     console.error(err);
                     alert('Save failed — check the console');
                     if(btn) { btn.disabled = false; btn.textContent = 'Sync Changes'; }
+                    isSubmitting = false;
                 });
         });
     }

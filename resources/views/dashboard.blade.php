@@ -128,12 +128,7 @@
                 <span class="text-white/80 group-hover:text-white font-medium">Diagrams</span>
             </a>
 
-            <a href="{{ route('ai.models.index') }}" class="flex items-center gap-3 px-5 py-3 glass rounded-xl border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/50 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-                <span class="text-white/80 group-hover:text-white font-medium">AI Models</span>
-            </a>
+            <!-- AI Models quick shortcut removed from dashboard shortcuts -->
             @else
             <a href="{{ route('dashboard.planning.index') }}" class="flex items-center gap-3 px-5 py-3 glass rounded-xl border border-white/5 hover:bg-white/10 hover:border-white/20 transition-all group">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white/50 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

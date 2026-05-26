@@ -2,6 +2,7 @@
 
 @section('dashboard-content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
+@include('dashboard.planning._permission')
 
 <style>
     :root {
@@ -256,9 +257,11 @@
                 <h1 class="text-4xl heading-cyber text-white">System <span class="text-indigo-500">Blueprint</span> — {{ $board->name }}</h1>
             </div>
             <div class="flex gap-3">
+                @if(auth()->check() && $board->canEdit(auth()->user()))
                 <button id="openCreateRequirementModal" class="px-8 py-3 bg-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all shadow-xl shadow-indigo-600/10">
                     + New Requirement
                 </button>
+                @endif
                 <a href="{{ route('dashboard.planning.show', $board) }}" class="px-8 py-3 glass-panel rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all">
                     Exit to Control
                 </a>
@@ -337,6 +340,7 @@
     let requirements = @json($requirementsPayload);
     const boardId = {{ $board->id }};
     const token = "{{ csrf_token() }}";
+    const CAN_EDIT = window.CAN_EDIT === true || window.CAN_EDIT === 'true';
 
     function renderMatrix() {
         const types = ['functional', 'non-functional', 'business', 'technical'];
@@ -361,7 +365,7 @@
                             <span class="label-cyber !text-[7px] text-white/40">${r.status || 'Draft'}</span>
                         </div>
                         <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                            <button onclick="deleteReq(${r.id})" class="text-white/20 hover:text-red-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                            ${CAN_EDIT ? `<button onclick="deleteReq(${r.id})" class="text-white/20 hover:text-red-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
                         </div>
                     </div>
                     <h4 class="text-sm font-bold text-white mb-2">${r.title}</h4>
@@ -377,27 +381,41 @@
     }
 
     // Modal Logic (sprint_planning pattern: style.display, no class toggling)
-    function closeModal() { document.getElementById('createRequirementModal').style.display = 'none'; }
-    document.getElementById('openCreateRequirementModal').onclick = () => { document.getElementById('createRequirementModal').style.display = 'flex'; };
-    document.getElementById('createRequirementModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+    function closeModal() { const m = document.getElementById('createRequirementModal'); if(m) m.style.display = 'none'; }
+    const openCreateBtn = document.getElementById('openCreateRequirementModal');
+    if(openCreateBtn && CAN_EDIT){ openCreateBtn.onclick = () => { const m = document.getElementById('createRequirementModal'); if(m) m.style.display = 'flex'; }; }
+    const createModal = document.getElementById('createRequirementModal');
+    if(createModal) createModal.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 
-    // Submit Logic
-    document.getElementById('createRequirement').onsubmit = async function(e) {
-        e.preventDefault();
-        const fd = new FormData(this);
-        const res = await fetch(`/dashboard/planning/${boardId}/requirements/items`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
-            body: fd
+    // Submit Logic (guarded)
+    const createForm = document.getElementById('createRequirement');
+    if(createForm){
+        createForm.onsubmit = async function(e) {
+            e.preventDefault();
+            if(!CAN_EDIT) return alert('Insufficient permissions');
+            const fd = new FormData(this);
+            const res = await fetch(`/dashboard/planning/${boardId}/requirements/items`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+                body: fd
+            });
+            if(res.ok) {
+                const data = await res.json();
+                requirements.push(data.requirement);
+                renderMatrix();
+                closeModal();
+                this.reset();
+            }
+        };
+    }
+
+    function deleteReq(id){
+        if(!CAN_EDIT) return alert('Insufficient permissions');
+        if(!confirm('DELETE REQUIREMENT?')) return;
+        fetch(`/dashboard/planning/${boardId}/requirements/items/${id}`,{ method:'DELETE', headers: {'X-CSRF-TOKEN': token} }).then(()=>{
+            requirements = requirements.filter(r=> String(r.id) !== String(id)); renderMatrix();
         });
-        if(res.ok) {
-            const data = await res.json();
-            requirements.push(data.requirement);
-            renderMatrix();
-            closeModal();
-            this.reset();
-        }
-    };
+    }
 
     window.onload = () => {
         renderMatrix();

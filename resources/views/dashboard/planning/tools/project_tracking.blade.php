@@ -146,9 +146,11 @@
                         <div class="dot absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300"></div>
                     </button>
                 </div>
-                <button id="btn-ai-assist" class="btn-cyber px-5 py-3 bg-amber-500 hover:bg-amber-400 text-black rounded-xl shadow-lg shadow-amber-500/10">AI Suggest</button>
-                <button id="btn-sync-git" class="btn-cyber px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-600/10">Sync Git</button>
-                <button id="btn-new-task" class="btn-cyber px-5 py-3 bg-white hover:bg-indigo-50 text-black rounded-xl shadow-xl">New Task</button>
+                @if(auth()->check() && $board->canEdit(auth()->user()))
+                    <button id="btn-ai-assist" class="btn-cyber px-5 py-3 bg-amber-500 hover:bg-amber-400 text-black rounded-xl shadow-lg shadow-amber-500/10">AI Suggest</button>
+                    <button id="btn-sync-git" class="btn-cyber px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-600/10">Sync Git</button>
+                    <button id="btn-new-task" class="btn-cyber px-5 py-3 bg-white hover:bg-indigo-50 text-black rounded-xl shadow-xl">New Task</button>
+                @endif
 
                 <!-- Search controls: type + input + sort -->
                 <div class="ml-4 flex items-center gap-2">
@@ -220,13 +222,17 @@
 
     <div id="new-task-modal" class="hidden bg-[#0a0b1e] rounded-[2rem] w-full max-w-lg p-8 border border-white/10 modal-content shadow-2xl">
         <h4 class="text-xl font-black text-white mb-6 uppercase italic tracking-tighter">Initialize New Task</h4>
-        <div class="space-y-4">
+            <div class="space-y-4">
             <input id="new-title" placeholder="TASK IDENTITY" class="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-indigo-500 font-bold uppercase italic">
             <textarea id="new-desc" placeholder="LOGIC PARAMETERS..." rows="4" class="w-full px-5 py-4 rounded-xl bg-black/40 border border-white/10 text-white text-sm outline-none focus:border-indigo-500 italic"></textarea>
-            <div class="flex justify-end gap-3 pt-4">
-                <button id="create-task-cancel" class="btn-cyber px-6 py-3 text-white/40 hover:text-white transition-colors">Abort</button>
-                <button id="create-task-confirm" class="btn-cyber px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/20">Commit Task</button>
-            </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button id="create-task-cancel" class="btn-cyber px-6 py-3 text-white/40 hover:text-white transition-colors">Abort</button>
+                    @if(auth()->check() && $board->canEdit(auth()->user()))
+                        <button id="create-task-confirm" class="btn-cyber px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-600/20">Commit Task</button>
+                    @else
+                        <button id="create-task-confirm" disabled class="btn-cyber px-8 py-3 bg-indigo-600/40 text-white rounded-xl">Commit Task (read-only)</button>
+                    @endif
+                </div>
         </div>
     </div>
 

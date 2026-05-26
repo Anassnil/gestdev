@@ -2,6 +2,7 @@
 
 @section('dashboard-content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
+@include('dashboard.planning._permission')
 
 <style>
     :root {
@@ -134,9 +135,11 @@
                 <h1 class="text-3xl heading-cyber uppercase">Mission Review — <span class="text-blue-500">{{ $board->name }}</span></h1>
             </div>
             <div class="flex items-center gap-3">
+                @if(auth()->check() && $board->canEdit(auth()->user()))
                 <button id="open-data-inject" class="bg-white text-black p-3 rounded-2xl hover:bg-indigo-500 hover:text-white transition-all shadow-xl shadow-indigo-500/10 flex items-center justify-center">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 4v16m8-8H4"/></svg>
                 </button>
+                @endif
                 <a href="{{ route('dashboard.planning.show', $board) }}" class="flex items-center bg-blue-600 hover:bg-white hover:text-black px-5 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
                     <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i> Open Board
                 </a>
@@ -222,8 +225,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     lucide.createIcons();
+    const CAN_EDIT = window.CAN_EDIT === true || window.CAN_EDIT === 'true';
     const boardId = {{ $board->id }};
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     let tasks = @json($tasksPayload);
 
     function updateDiagram(){
@@ -302,20 +306,26 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     });
 
-    document.getElementById('createFeedback').addEventListener('submit', async function(e){
-        e.preventDefault();
-        const fd = new FormData(this);
-        const res = await fetch(`/dashboard/planning/${boardId}/tasks`,{ method:'POST', headers: {'X-CSRF-TOKEN':token,'Accept':'application/json'}, body: new URLSearchParams(fd) });
-        if(res.ok){ const data = await res.json(); tasks.unshift(data.task ?? data); this.reset(); renderAll(); }
-    });
+    const createFeedbackForm = document.getElementById('createFeedback');
+    if(createFeedbackForm){
+        createFeedbackForm.addEventListener('submit', async function(e){
+            e.preventDefault();
+            if(!CAN_EDIT) return alert('Insufficient permissions');
+            const fd = new FormData(this);
+            const res = await fetch(`/dashboard/planning/${boardId}/tasks`,{ method:'POST', headers: {'X-CSRF-TOKEN':token,'Accept':'application/json'}, body: new URLSearchParams(fd) });
+            if(res.ok){ const data = await res.json(); tasks.unshift(data.task ?? data); this.reset(); renderAll(); }
+        });
+    }
 
     renderAll();
 
     // Data Inject modal
     const diModal = document.getElementById('data-inject-modal');
-    document.getElementById('open-data-inject').onclick = () => diModal.classList.remove('hidden');
-    document.getElementById('close-data-inject').onclick = () => diModal.classList.add('hidden');
-    diModal.addEventListener('click', e => { if (e.target === diModal) diModal.classList.add('hidden'); });
+    const openDataBtn = document.getElementById('open-data-inject');
+    const closeDataBtn = document.getElementById('close-data-inject');
+    if(openDataBtn && diModal && CAN_EDIT) openDataBtn.onclick = () => diModal.classList.remove('hidden');
+    if(closeDataBtn && diModal) closeDataBtn.onclick = () => diModal.classList.add('hidden');
+    if(diModal) diModal.addEventListener('click', e => { if (e.target === diModal) diModal.classList.add('hidden'); });
 
     requestAnimationFrame(() => {
         const page = document.getElementById('retro-page');

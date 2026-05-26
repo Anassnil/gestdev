@@ -204,7 +204,7 @@
                         <ul class="space-y-4 text-sm font-bold text-white/50">
                             <li><a href="#" class="hover:text-white transition">Architecture</a></li>
                             <li><a href="#" class="hover:text-white transition">SaaS Logic</a></li>
-                            <li><a href="{{ route('ai.models.index') }}" class="hover:text-white transition">AI Models</a></li>
+                            <!-- AI Models link removed from public footer -->
                         </ul>
                     </div>
                     <div>

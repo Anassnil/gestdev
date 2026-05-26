@@ -320,12 +320,15 @@
             <h1 class="text-5xl font-black italic uppercase tracking-tighter text-white">Strategy <span class="text-indigo-500">Matrix</span></h1>
             <p class="text-slate-500 font-bold mt-2">Team Velocity: <span class="text-white">42.5 SP</span> // Status: <span class="text-emerald-400">Stable</span></p>
         </div>
+        @include('dashboard.planning._permission')
         <div class="flex gap-4">
             <div class="flex bg-white/5 rounded-2xl p-1 border border-white/10">
                 <button id="matrixViewBtn" class="px-6 py-2 rounded-xl bg-indigo-600 text-[10px] font-black uppercase">Matrix</button>
                 <button id="listViewBtn" class="px-6 py-2 rounded-xl text-[10px] font-black uppercase text-slate-500">List</button>
             </div>
+            @if(!empty($BOARD_CAN_EDIT))
             <button onclick="createTask('todo')" class="bg-white text-black px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-500 hover:text-white transition-all shadow-xl shadow-indigo-500/10">+ Deploy Task</button>
+            @endif
             <a href="{{ route('dashboard.planning.show', $board) }}" class="flex items-center gap-2 px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-all" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 Back to Board

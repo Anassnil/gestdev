@@ -7,51 +7,59 @@ Route::get('/', function () {
     return view('home');
 });
 
-// AI Model Management routes
-use App\Http\Controllers\AI\AIModelController;
-use App\Http\Controllers\AI\DatasetController;
-use App\Http\Controllers\AI\ExperimentController;
-use App\Http\Controllers\AI\TrainingRunController;
-use App\Http\Controllers\AI\DeploymentController;
-use App\Http\Controllers\AI\HelpController;
+/*
+|--------------------------------------------------------------------------
+| AI Model Management routes (disabled)
+|--------------------------------------------------------------------------
+| The AI model management UI routes are commented out to hide the public
+| management pages while keeping the implementation in the codebase. To
+| re-enable, restore the `use` statements and the Route group below.
+*/
 
-Route::middleware(['auth', \App\Http\Middleware\EnsureAiAdmin::class])->prefix('ai')->group(function () {
-    // Help & Documentation
-    Route::get('/help', [HelpController::class, 'guide'])->name('ai.help');
+// use App\Http\Controllers\AI\AIModelController;
+// use App\Http\Controllers\AI\DatasetController;
+// use App\Http\Controllers\AI\ExperimentController;
+// use App\Http\Controllers\AI\TrainingRunController;
+// use App\Http\Controllers\AI\DeploymentController;
+// use App\Http\Controllers\AI\HelpController;
 
-    Route::get('/models', [AIModelController::class, 'index'])->name('ai.models.index');
-    Route::post('/models', [AIModelController::class, 'store'])->name('ai.models.store');
-    Route::get('/models/{model}', [AIModelController::class, 'show'])->name('ai.models.show');
-    Route::patch('/models/{model}', [AIModelController::class, 'update'])->name('ai.models.update');
-    Route::delete('/models/{model}', [AIModelController::class, 'destroy'])->name('ai.models.destroy');
-
-    Route::get('/datasets', [DatasetController::class, 'index'])->name('ai.datasets.index');
-    Route::get('/datasets/create', [DatasetController::class, 'create'])->name('ai.datasets.create');
-    Route::post('/datasets', [DatasetController::class, 'store'])->name('ai.datasets.store');
-    Route::get('/datasets/{dataset}', [DatasetController::class, 'show'])->name('ai.datasets.show');
-    Route::delete('/datasets/{dataset}', [DatasetController::class, 'destroy'])->name('ai.datasets.destroy');
-
-    Route::get('/experiments', [ExperimentController::class, 'index'])->name('ai.experiments.index');
-    Route::post('/experiments', [ExperimentController::class, 'store'])->name('ai.experiments.store');
-    Route::get('/experiments/multi-compare', [ExperimentController::class, 'multiCompare'])->name('ai.experiments.multi_compare');
-    Route::get('/experiments/{experiment}', [ExperimentController::class, 'show'])->name('ai.experiments.show');
-    Route::get('/experiments/{experiment}/compare', [ExperimentController::class, 'compare'])->name('ai.experiments.compare');
-    Route::get('/experiments/{experiment}/promote', function (\App\Models\Experiment $experiment) {
-        return redirect()->route('ai.experiments.show', $experiment)
-            ->with('error', 'Use the Promote button to submit this action.');
-    });
-    Route::post('/experiments/{experiment}/promote', [ExperimentController::class, 'promoteBest'])->name('ai.experiments.promote');
-
-    Route::get('/training-runs', [TrainingRunController::class, 'index'])->name('ai.training_runs.index');
-    Route::get('/training-runs/create', [TrainingRunController::class, 'create'])->name('ai.training_runs.create');
-    Route::post('/training-runs', [TrainingRunController::class, 'store'])->name('ai.training_runs.store');
-    Route::get('/training-runs/{training_run}', [TrainingRunController::class, 'show'])->name('ai.training_runs.show');
-    Route::get('/training-runs/{training_run}/progress', [TrainingRunController::class, 'progress'])->name('ai.training_runs.progress');
-    Route::post('/training-runs/{training_run}/cancel', [TrainingRunController::class, 'cancel'])->name('ai.training_runs.cancel');
-
-    Route::get('/deployments', [DeploymentController::class, 'index'])->name('ai.deployments.index');
-    Route::post('/deployments', [DeploymentController::class, 'store'])->name('ai.deployments.store');
-});
+// Route::middleware(['auth', \App\Http\Middleware\EnsureAiAdmin::class])->prefix('ai')->group(function () {
+//     // Help & Documentation
+//     Route::get('/help', [HelpController::class, 'guide'])->name('ai.help');
+//
+//     Route::get('/models', [AIModelController::class, 'index'])->name('ai.models.index');
+//     Route::post('/models', [AIModelController::class, 'store'])->name('ai.models.store');
+//     Route::get('/models/{model}', [AIModelController::class, 'show'])->name('ai.models.show');
+//     Route::patch('/models/{model}', [AIModelController::class, 'update'])->name('ai.models.update');
+//     Route::delete('/models/{model}', [AIModelController::class, 'destroy'])->name('ai.models.destroy');
+//
+//     Route::get('/datasets', [DatasetController::class, 'index'])->name('ai.datasets.index');
+//     Route::get('/datasets/create', [DatasetController::class, 'create'])->name('ai.datasets.create');
+//     Route::post('/datasets', [DatasetController::class, 'store'])->name('ai.datasets.store');
+//     Route::get('/datasets/{dataset}', [DatasetController::class, 'show'])->name('ai.datasets.show');
+//     Route::delete('/datasets/{dataset}', [DatasetController::class, 'destroy'])->name('ai.datasets.destroy');
+//
+//     Route::get('/experiments', [ExperimentController::class, 'index'])->name('ai.experiments.index');
+//     Route::post('/experiments', [ExperimentController::class, 'store'])->name('ai.experiments.store');
+//     Route::get('/experiments/multi-compare', [ExperimentController::class, 'multiCompare'])->name('ai.experiments.multi_compare');
+//     Route::get('/experiments/{experiment}', [ExperimentController::class, 'show'])->name('ai.experiments.show');
+//     Route::get('/experiments/{experiment}/compare', [ExperimentController::class, 'compare'])->name('ai.experiments.compare');
+//     Route::get('/experiments/{experiment}/promote', function (\App\Models\Experiment $experiment) {
+//         return redirect()->route('ai.experiments.show', $experiment)
+//             ->with('error', 'Use the Promote button to submit this action.');
+//     });
+//     Route::post('/experiments/{experiment}/promote', [ExperimentController::class, 'promoteBest'])->name('ai.experiments.promote');
+//
+//     Route::get('/training-runs', [TrainingRunController::class, 'index'])->name('ai.training_runs.index');
+//     Route::get('/training-runs/create', [TrainingRunController::class, 'create'])->name('ai.training_runs.create');
+//     Route::post('/training-runs', [TrainingRunController::class, 'store'])->name('ai.training_runs.store');
+//     Route::get('/training-runs/{training_run}', [TrainingRunController::class, 'show'])->name('ai.training_runs.show');
+//     Route::get('/training-runs/{training_run}/progress', [TrainingRunController::class, 'progress'])->name('ai.training_runs.progress');
+//     Route::post('/training-runs/{training_run}/cancel', [TrainingRunController::class, 'cancel'])->name('ai.training_runs.cancel');
+//
+//     Route::get('/deployments', [DeploymentController::class, 'index'])->name('ai.deployments.index');
+//     Route::post('/deployments', [DeploymentController::class, 'store'])->name('ai.deployments.store');
+// });
 
 use App\Http\Controllers\AuthController;
 

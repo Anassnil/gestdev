@@ -2,6 +2,7 @@
 
 @section('dashboard-content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
+@include('dashboard.planning._permission')
 
 <style>
     :root {
@@ -164,9 +165,11 @@
                 <div class="glass-panel rounded-3xl p-6 border-t-4 border-blue-500 h-full flex flex-col">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="label-cyber text-blue-400 flex items-center gap-2"><i data-lucide="package" class="w-4 h-4"></i> 1. Superset Planning</h3>
+                        @if(auth()->check() && $board->canEdit(auth()->user()))
                         <button id="open-superset-modal" class="bg-white text-black p-2.5 rounded-xl hover:bg-blue-500 hover:text-white transition-all shadow-lg shadow-blue-500/10 flex items-center justify-center">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 4v16m8-8H4"/></svg>
                         </button>
+                        @endif
                     </div>
 
                     <div class="flex-grow space-y-2 custom-scroll overflow-y-auto max-h-[500px] pr-1">
@@ -180,9 +183,11 @@
                 <div class="glass-panel rounded-3xl p-6 border-t-4 border-emerald-500 h-full flex flex-col">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="label-cyber text-emerald-400 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4"></i> 2. Epic Breakdown</h3>
+                        @if(auth()->check() && $board->canEdit(auth()->user()))
                         <button id="open-epic-modal" class="bg-white text-black p-2.5 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-lg shadow-emerald-500/10 flex items-center justify-center">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 4v16m8-8H4"/></svg>
                         </button>
+                        @endif
                     </div>
 
                     <div class="flex-grow space-y-2 custom-scroll overflow-y-auto max-h-[500px] pr-1">
@@ -199,9 +204,11 @@
                 <div class="glass-panel rounded-3xl p-6 border-t-4 border-purple-500 h-full flex flex-col">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="label-cyber text-purple-400 flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> 3. Deployment</h3>
+                        @if(auth()->check() && $board->canEdit(auth()->user()))
                         <button id="open-schedule-modal" class="bg-white text-black p-2.5 rounded-xl hover:bg-purple-500 hover:text-white transition-all shadow-lg shadow-purple-500/10 flex items-center justify-center">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M12 4v16m8-8H4"/></svg>
                         </button>
+                        @endif
                     </div>
 
                     <div class="flex-grow space-y-2 custom-scroll overflow-y-auto max-h-[500px] pr-1">
@@ -282,6 +289,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     lucide.createIcons();
+    const CAN_EDIT = window.CAN_EDIT === true || window.CAN_EDIT === 'true';
     const boardId = {{ $board->id }};
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     let releases = @json($itemsPayload);
@@ -374,6 +382,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     function attachListButtons(){
+        if(!CAN_EDIT) return; // viewers shouldn't have interactive controls
         document.querySelectorAll('[data-action="delete"]').forEach(btn => {
             btn.onclick = async function(){
                 const el = this.closest('[data-id]');
@@ -438,9 +447,11 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    // Sortable
+    // Sortable (guarded)
     ['superset','epic','requirement','schedule'].forEach(type => {
-        Sortable.create(document.getElementById(`list-${type}`),{
+        const el = document.getElementById(`list-${type}`);
+        if(!el) return;
+        Sortable.create(el,{
             group: 'release', animation: 250, ghostClass: 'opacity-10',
             onAdd: async function(evt){
                 const id = evt.item.dataset.id;
@@ -449,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':token}, 
                     body: JSON.stringify({ type, position: evt.newIndex }) 
                 });
-                releases = releases.map(r => String(r.id) === String(id) ? {...r, type, position: evt.newIndex } : r);
+                releases = releases.map(r => String(r.id) === String(id) ? Object.assign({}, r, { type, position: evt.newIndex }) : r);
                 renderLists();
             },
             onUpdate: function(evt){
@@ -460,9 +471,11 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     });
 
-    // Form Handlers
+    // Form Handlers (guarded)
     ['createRelease', 'createEpic', 'createRequirement', 'createSchedule'].forEach(id => {
-        document.getElementById(id).addEventListener('submit', async function(e){
+        const form = document.getElementById(id);
+        if(!form) return;
+        form.addEventListener('submit', async function(e){
             e.preventDefault();
             const fd = new FormData(this);
             // route by form id (requirements use separate controller)
@@ -477,11 +490,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
     renderLists();
 
-    // Deployment Tip modal
+    // Deployment Tip modal (guarded)
     const tipModal = document.getElementById('tip-modal');
-    document.getElementById('open-tip-modal').onclick = () => tipModal.classList.remove('hidden');
-    document.getElementById('close-tip-modal').onclick = () => tipModal.classList.add('hidden');
-    tipModal.addEventListener('click', e => { if (e.target === tipModal) tipModal.classList.add('hidden'); });
+    const openTipBtn = document.getElementById('open-tip-modal');
+    const closeTipBtn = document.getElementById('close-tip-modal');
+    if(openTipBtn && tipModal) openTipBtn.addEventListener('click', () => tipModal.classList.remove('hidden'));
+    if(closeTipBtn && tipModal) closeTipBtn.addEventListener('click', () => tipModal.classList.add('hidden'));
+    if(tipModal) tipModal.addEventListener('click', e => { if (e.target === tipModal) tipModal.classList.add('hidden'); });
 
     // Release modals wiring
     [
@@ -490,9 +505,11 @@ document.addEventListener('DOMContentLoaded', function(){
         ['open-schedule-modal', 'close-schedule-modal', 'schedule-modal'],
     ].forEach(([openId, closeId, modalId]) => {
         const m = document.getElementById(modalId);
-        document.getElementById(openId).onclick = () => m.classList.remove('hidden');
-        document.getElementById(closeId).onclick = () => m.classList.add('hidden');
-        m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
+        const openEl = document.getElementById(openId);
+        const closeEl = document.getElementById(closeId);
+        if(openEl && m) openEl.addEventListener('click', () => m.classList.remove('hidden'));
+        if(closeEl && m) closeEl.addEventListener('click', () => m.classList.add('hidden'));
+        if(m) m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); });
     });
 
     requestAnimationFrame(() => {

@@ -40,7 +40,7 @@
                             @else
                                 <a href="{{ route('dashboard.planning.index') }}" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">Project Tracking</a>
                             @endif
-                            <a href="{{ route('ai.models.index') }}" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">AI Model Management</a>
+                            <!-- AI Model Management link removed per request -->
                             <a href="{{ route('dashboard.code_repository.index') }}" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">Code Repository</a>
                             <a href="#" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">API Management</a>
                             <a href="#" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">Test Automation</a>
@@ -128,7 +128,9 @@
                             <nav class="grid grid-cols-2 gap-2">
                                 <a href="/dashboard" class="px-2 py-1.5 rounded-md hover:bg-white/5 text-xs transition-all text-center" style="color: var(--text-secondary);">Overview</a>
                                 <a href="{{ route('dashboard.planning.index') }}" class="px-2 py-1.5 rounded-md hover:bg-white/5 text-xs transition-all text-center" style="color: var(--text-secondary);">Planning</a>
-                                <a href="{{ route('ai.models.index') }}" class="px-2 py-1.5 rounded-md hover:bg-white/5 text-xs transition-all text-center" style="color: var(--text-secondary);">AI Models</a>
+                                @if(Route::has('ai.models.index'))
+                                    <a href="{{ route('ai.models.index') }}" class="px-2 py-1.5 rounded-md hover:bg-white/5 text-xs transition-all text-center" style="color: var(--text-secondary);">AI Models</a>
+                                @endif
                                 <a href="{{ route('dashboard.people.index') }}" class="px-2 py-1.5 rounded-md hover:bg-white/5 text-xs transition-all text-center" style="color: var(--text-secondary);">Community</a>
                                 <a href="{{ route('dashboard.settings') }}" class="px-2 py-1.5 rounded-md hover:bg-white/5 text-xs transition-all text-center" style="color: var(--text-secondary);">Settings</a>
                                 <form method="POST" action="{{ route('logout') }}" class="contents">

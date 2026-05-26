@@ -40,6 +40,7 @@
     }
 </style>
 
+@include('dashboard.planning._permission')
 <div class="pt-8 px-6 pb-12">
     <div class="max-w-6xl mx-auto">
         
@@ -59,16 +60,18 @@
                 <p class="text-white/40 text-sm max-w-md">Orchestrate your SaaS evolution, track major milestones, and visualize the path to launch.</p>
             </div>
             
-            <div class="flex items-center gap-3">
-                <a href="{{ route('dashboard.planning.show', $board) }}" 
-                   class="px-5 py-3 glass rounded-xl text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2">
-                    Back
-                </a>
-                <a href="{{ route('dashboard.planning.roadmaps.create', $board) }}" 
-                   class="px-6 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-900/40 hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
-                    New Roadmap
-                </a>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('dashboard.planning.show', $board) }}" 
+                       class="px-5 py-3 glass rounded-xl text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 transition-all flex items-center gap-2">
+                        Back
+                    </a>
+                    @if(!empty($BOARD_CAN_EDIT))
+                    <a href="{{ route('dashboard.planning.roadmaps.create', $board) }}" 
+                       class="px-6 py-3 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-900/40 hover:bg-blue-500 hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"/></svg>
+                        New Roadmap
+                    </a>
+                    @endif
             </div>
         </div>
 
@@ -103,12 +106,14 @@
                                            class="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         </a>
+                                        @if(!empty($BOARD_CAN_EDIT))
                                         <form method="POST" action="{{ route('dashboard.planning.roadmaps.destroy', [$board, $r]) }}" onsubmit="return confirm('Archive this roadmap?');">
                                             @csrf @method('DELETE')
                                             <button class="p-2 hover:bg-red-500/20 rounded-lg text-white/20 hover:text-red-400 transition-colors">
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -166,9 +171,11 @@
                 </div>
                 <h3 class="text-3xl font-black text-white mb-3 italic uppercase tracking-tighter">Strategic Void Detected</h3>
                 <p class="text-white/30 max-w-sm mx-auto mb-10 text-sm leading-relaxed">Your project roadmap is currently uninitialized. Create a strategy to begin tracking milestones.</p>
+                @if(!empty($BOARD_CAN_EDIT))
                 <a href="{{ route('dashboard.planning.roadmaps.create', $board) }}" class="px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-105 inline-block uppercase tracking-widest text-[10px]">
                     Initialize Strategy
                 </a>
+                @endif
             </div>
         @endif
     </div>

@@ -1,8 +1,16 @@
 @extends('layouts.dashboard')
 
 @section('dashboard-content')
+    @include('dashboard.planning._permission')
     <div class="pt-6 px-0">
         <div class="max-w-3xl mx-auto">
+            @unless($BOARD_CAN_EDIT)
+                <div class="p-12 rounded-2xl bg-black/40 text-center text-white/80">
+                    <h2 class="text-xl font-bold mb-3">Access Denied</h2>
+                    <p class="mb-6">You don't have permission to create roadmaps on this board.</p>
+                    <a href="{{ route('dashboard.planning.roadmaps.index', $board) }}" class="px-5 py-3 bg-indigo-600 rounded-lg text-white font-bold">Return</a>
+                </div>
+            @else
             <h1 class="text-2xl font-bold">New Roadmap — {{ $board->name }}</h1>
             <p class="text-white/60">Create a new product roadmap.</p>
 
@@ -21,6 +29,7 @@
                     <a href="{{ route('dashboard.planning.roadmaps.index', $board) }}" class="ml-2 px-3 py-2 bg-white/5 rounded-md">Cancel</a>
                 </div>
             </form>
+            @endunless
         </div>
     </div>
 @endsection

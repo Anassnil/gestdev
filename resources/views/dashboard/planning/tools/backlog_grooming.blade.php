@@ -2,6 +2,7 @@
 
 @section('dashboard-content')
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('dashboard.planning._permission')
 
     <style>
         /* Premium Glass Morphism & Cyber UI */
@@ -282,10 +283,13 @@
     <script>
     document.addEventListener('DOMContentLoaded', function(){
         // Quick Inject modal
+        const CAN_EDIT = window.CAN_EDIT === true || window.CAN_EDIT === 'true';
         const qiModal = document.getElementById('quick-inject-modal');
-        document.getElementById('open-quick-inject').onclick = () => qiModal.classList.remove('hidden');
-        document.getElementById('close-quick-inject').onclick = () => qiModal.classList.add('hidden');
-        qiModal.addEventListener('click', e => { if (e.target === qiModal) qiModal.classList.add('hidden'); });
+        const openQiBtn = document.getElementById('open-quick-inject');
+        const closeQiBtn = document.getElementById('close-quick-inject');
+        if(openQiBtn && qiModal && CAN_EDIT) openQiBtn.onclick = () => qiModal.classList.remove('hidden');
+        if(closeQiBtn && qiModal) closeQiBtn.onclick = () => qiModal.classList.add('hidden');
+        if(qiModal) qiModal.addEventListener('click', e => { if (e.target === qiModal) qiModal.classList.add('hidden'); });
 
         const boardId = {{ $board->id }};
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -332,17 +336,21 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button data-action="save" class="p-3 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-xl transition-all btn-action">
+                        ${CAN_EDIT ? `<button data-action="save" class="p-3 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white rounded-xl transition-all btn-action">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                         </button>
                         <button data-action="delete" class="p-3 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all btn-action">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
+                        </button>` : ''}
                     </div>
                 `;
 
-                el.querySelector('[data-action="save"]').addEventListener('click', () => saveTask(el));
-                el.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTask(el));
+                if(CAN_EDIT){
+                    const saveBtn = el.querySelector('[data-action="save"]');
+                    const delBtn = el.querySelector('[data-action="delete"]');
+                    if(saveBtn) saveBtn.addEventListener('click', () => saveTask(el));
+                    if(delBtn) delBtn.addEventListener('click', () => deleteTask(el));
+                }
 
                 tasksList.appendChild(el);
             });

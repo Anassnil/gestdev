@@ -14,7 +14,9 @@
                     <a href="{{ route('ai.training_runs.create', ['experiment_id' => $latestExperiment->id]) }}" class="px-4 py-2 bg-blue-600 rounded-xl text-white hover:bg-blue-700 transition-all text-sm md:text-base">Start Training</a>
                 @endif
                 <a href="{{ route('ai.experiments.index') }}" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm md:text-base">Experiments</a>
-                <a href="{{ route('ai.models.index') }}" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm md:text-base">Back</a>
+                @if(Route::has('ai.models.index'))
+                    <a href="{{ route('ai.models.index') }}" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm md:text-base">Back</a>
+                @endif
             </div>
         </div>
 

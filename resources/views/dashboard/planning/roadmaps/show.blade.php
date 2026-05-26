@@ -195,6 +195,7 @@
     [data-theme="light"] #desc-info-btn:hover { background: rgba(79,70,229,0.20) !important; }
 </style>
 
+@include('dashboard.planning._permission')
 <div class="pt-8 px-6 pb-20">
     <div class="max-w-6xl mx-auto">
         
@@ -276,6 +277,7 @@
         @endphp
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-10">
+            @if($BOARD_CAN_EDIT)
             <button id="open-milestone-modal" class="group glass-panel rounded-3xl p-6 border border-white/5 flex flex-col justify-between hover:border-blue-500/40 transition-all btn-action text-left">
                 <div class="w-10 h-10 rounded-2xl bg-blue-600/20 flex items-center justify-center group-hover:bg-blue-600 transition-all mb-3">
                     <svg class="w-5 h-5 text-blue-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg>
@@ -285,6 +287,7 @@
                     <div class="text-sm font-black text-white mt-1 italic tracking-tight group-hover:text-blue-400 transition-colors">New Milestone</div>
                 </div>
             </button>
+            @endif
 
             <div class="glass-panel rounded-3xl p-6 border-l-4 border-blue-500 relative overflow-hidden">
                 <div class="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2">
@@ -387,6 +390,7 @@
                                     </div>
 
                                     <div class="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                        @if($BOARD_CAN_EDIT)
                                         <form method="POST" action="{{ route('dashboard.planning.roadmaps.milestones.update', [$board, $roadmap, $m]) }}">
                                             @csrf @method('PUT')
                                             <input type="hidden" name="completed" value="{{ $m->completed ? 0 : 1 }}">
@@ -400,6 +404,7 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -467,9 +472,11 @@
 <script>
     (function(){
         const modal = document.getElementById('milestone-modal');
-        document.getElementById('open-milestone-modal').onclick = () => modal.classList.remove('hidden');
-        document.getElementById('close-milestone-modal').onclick = () => modal.classList.add('hidden');
-        modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
+        const openBtn = document.getElementById('open-milestone-modal');
+        const closeBtn = document.getElementById('close-milestone-modal');
+        if(openBtn && modal) openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+        if(closeBtn && modal) closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        if(modal) modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
     })();
 </script>
 

@@ -67,7 +67,6 @@
     [data-theme="light"] button.diagram-delete:hover { color: #ef4444 !important; }
     [data-theme="light"] #diagram-modal-inline > div { background: #ffffff !important; border-color: var(--lm-border) !important; }
     /* VS Code-style editor sub-elements */
-    [data-theme="light"] #diagram-line-numbers { border-color: var(--lm-border) !important; color: rgba(31,41,55,0.30) !important; }
     [data-theme="light"] #diagram-modal-inline input,
     [data-theme="light"] #diagram-modal-inline textarea { background: transparent !important; border-color: var(--lm-border) !important; color: var(--lm-text) !important; }
     [data-theme="light"] #diagram-modal-inline input::placeholder,
@@ -169,6 +168,8 @@
                 </div>
                 {{-- Top-right control buttons intentionally removed per UI request --}}
             </div>
+
+            {{-- Debug banner and diagnostics removed; cleaned view --}}
 
             @include('dashboard.planning.diagrams._hub', ['board' => $board, 'diagrams' => $diagrams, 'showHeader' => false, 'showControls' => true])
         </div>
