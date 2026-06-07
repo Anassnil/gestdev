@@ -12,6 +12,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Exception;
 
 class CodeRepositoryController extends Controller
 {
@@ -118,7 +122,64 @@ class CodeRepositoryController extends Controller
 
         $canManage = $this->canManage($request->user()->id, $repository);
 
-        return view('dashboard.code_repository.show', compact('repository', 'availableUsers', 'canManage'));
+        // Fetch recent commits and PRs from GitHub if remote info present (cached)
+        $remoteChanges = ['commits' => [], 'pulls' => [], 'error' => null];
+        if ($repository->remote_full_name && $repository->remote_token) {
+            try {
+                $cached = Cache::remember("repo_changes_{$repository->id}", now()->addMinutes(5), function () use ($repository) {
+                    $full = $repository->remote_full_name;
+                    $token = Crypt::decryptString($repository->remote_token);
+                    $headers = ['Accept' => 'application/vnd.github.v3+json'];
+
+                    $commitsResp = Http::withHeaders($headers)->withToken($token)->get("https://api.github.com/repos/{$full}/commits", ['per_page' => 5]);
+                    $commits = $commitsResp->ok() ? $commitsResp->json() : [];
+
+                    $pullsResp = Http::withHeaders($headers)->withToken($token)->get("https://api.github.com/repos/{$full}/pulls", ['per_page' => 5, 'state' => 'all']);
+                    $pulls = $pullsResp->ok() ? $pullsResp->json() : [];
+
+                    return ['commits' => $commits, 'pulls' => $pulls];
+                });
+
+                $remoteChanges['commits'] = $cached['commits'] ?? [];
+                $remoteChanges['pulls'] = $cached['pulls'] ?? [];
+            } catch (Exception $e) {
+                $remoteChanges['error'] = 'Unable to fetch remote changes.';
+            }
+        }
+
+        // Build activity chart data: branches + collaborators created per month (last 6 months)
+        $chartMonths = [];
+        $chartBranches = [];
+        $chartCollabs = [];
+
+        $branchActivity = $repository->branches()
+            ->where('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->get(['created_at'])
+            ->groupBy(fn ($b) => $b->created_at->format('Y-m'))
+            ->map->count()
+            ->toArray();
+
+        $collabActivity = $repository->collaborators()
+            ->where('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->get(['created_at'])
+            ->groupBy(fn ($c) => $c->created_at->format('Y-m'))
+            ->map->count()
+            ->toArray();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $key = now()->subMonths($i)->format('Y-m');
+            $chartMonths[]   = now()->subMonths($i)->format('M Y');
+            $chartBranches[] = $branchActivity[$key] ?? 0;
+            $chartCollabs[]  = $collabActivity[$key] ?? 0;
+        }
+
+        $chartData = [
+            'labels'       => $chartMonths,
+            'branches'     => $chartBranches,
+            'collaborators'=> $chartCollabs,
+        ];
+
+        return view('dashboard.code_repository.show', compact('repository', 'availableUsers', 'canManage', 'remoteChanges', 'chartData'));
     }
 
     public function updateRepository(Request $request, Repository $repository): RedirectResponse
@@ -130,14 +191,35 @@ class CodeRepositoryController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'visibility' => ['required', Rule::in(['public', 'private'])],
             'is_archived' => ['nullable', 'boolean'],
+            'remote_full_name' => ['nullable', 'string', 'max:255'],
+            'remote_token' => ['nullable', 'string', 'max:4096'],
         ]);
 
-        $repository->update([
+        // Encrypt token only when a new token is provided; leave existing token if field left blank.
+        $shouldSetToken = false;
+        $enc = null;
+        if (array_key_exists('remote_token', $data) && strlen(trim((string) $data['remote_token'])) > 0) {
+            try {
+                $enc = Crypt::encryptString($data['remote_token']);
+                $shouldSetToken = true;
+            } catch (Exception $e) {
+                $enc = null;
+                $shouldSetToken = false;
+            }
+        }
+
+        $updateData = [
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'visibility' => $data['visibility'],
             'is_archived' => (bool) ($data['is_archived'] ?? false),
-        ]);
+            'remote_full_name' => strlen(trim((string) ($data['remote_full_name'] ?? ''))) > 0 ? $data['remote_full_name'] : null,
+        ];
+        if ($shouldSetToken) {
+            $updateData['remote_token'] = $enc;
+        }
+
+        $repository->update($updateData);
 
         return redirect()
             ->route('dashboard.code_repository.show', $repository)

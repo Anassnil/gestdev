@@ -42,7 +42,7 @@
                             @endif
                             <!-- AI Model Management link removed per request -->
                             <a href="{{ route('dashboard.code_repository.index') }}" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">Code Repository</a>
-                            <a href="#" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">API Management</a>
+                            <a href="{{ route('dashboard.api_management.index') }}" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">API Management</a>
                             <a href="#" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">Test Automation</a>
                             <a href="#" class="block px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">Analytics</a>
                             <a href="{{ route('dashboard.people.index') }}" class="flex items-center justify-between px-3 py-2 rounded-md hover:bg-white/5 text-sm transition-all" style="color: var(--text-secondary);">
@@ -142,13 +142,13 @@
                     </div>
 
                     @if(session('success'))
-                        <div class="mb-4 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-sm">
+                        <div class="flash-success mb-4 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-sm">
                             {{ session('success') }}
                         </div>
                     @endif
 
                     @if(session('error'))
-                        <div class="mb-4 px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-200 text-sm">
+                        <div class="flash-error mb-4 px-4 py-3 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-200 text-sm">
                             {{ session('error') }}
                         </div>
                     @endif

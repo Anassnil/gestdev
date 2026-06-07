@@ -149,12 +149,65 @@ Route::get('/dashboard', function () {
     // Sort by time descending, take latest 10
     $activities = $activities->sortByDesc('time')->take(10)->values();
 
-    return view('dashboard', compact('activities'));
+    // Active-times chart: count activity events by hour of day (0–23)
+    $hourCounts = array_fill(0, 24, 0);
+    collect()
+        ->merge(\App\Models\Task::whereHas('board', fn($q) => $q->where('user_id', $user->id))->latest('updated_at')->take(500)->pluck('updated_at'))
+        ->merge(\App\Models\Requirement::whereHas('board', fn($q) => $q->where('user_id', $user->id))->latest('updated_at')->take(200)->pluck('updated_at'))
+        ->merge(\App\Models\Board::where('user_id', $user->id)->latest('updated_at')->take(100)->pluck('updated_at'))
+        ->each(function ($t) use (&$hourCounts) {
+            $hourCounts[(int) \Carbon\Carbon::parse($t)->format('H')]++;
+        });
+    $activityByHour = $hourCounts;
+
+    // Active-times chart: by day (last 30 days)
+    $allTimestamps = collect()
+        ->merge(\App\Models\Task::whereHas('board', fn($q) => $q->where('user_id', $user->id))->latest('updated_at')->take(500)->pluck('updated_at'))
+        ->merge(\App\Models\Requirement::whereHas('board', fn($q) => $q->where('user_id', $user->id))->latest('updated_at')->take(200)->pluck('updated_at'))
+        ->merge(\App\Models\Board::where('user_id', $user->id)->latest('updated_at')->take(100)->pluck('updated_at'));
+    $dayCounts = [];
+    for ($i = 29; $i >= 0; $i--) {
+        $dayCounts[\Carbon\Carbon::now()->subDays($i)->format('M d')] = 0;
+    }
+    $allTimestamps->each(function ($t) use (&$dayCounts) {
+        $key = \Carbon\Carbon::parse($t)->format('M d');
+        if (array_key_exists($key, $dayCounts)) $dayCounts[$key]++;
+    });
+    $activityByDay       = array_values($dayCounts);
+    $activityByDayLabels = array_keys($dayCounts);
+
+    // Active-times chart: by month (last 12 months)
+    $monthCounts = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $monthCounts[\Carbon\Carbon::now()->subMonths($i)->format('M Y')] = 0;
+    }
+    $allTimestamps->each(function ($t) use (&$monthCounts) {
+        $key = \Carbon\Carbon::parse($t)->format('M Y');
+        if (array_key_exists($key, $monthCounts)) $monthCounts[$key]++;
+    });
+    $activityByMonth       = array_values($monthCounts);
+    $activityByMonthLabels = array_keys($monthCounts);
+
+    // Recent sessions for "Last Connection" panel
+    $recentSessions = \Illuminate\Support\Facades\DB::table('sessions')
+        ->where('user_id', $user->id)
+        ->orderByDesc('last_activity')
+        ->take(5)
+        ->get(['ip_address', 'user_agent', 'last_activity']);
+
+        // Determine "teams" as boards the user owns or collaborates on (used in Team Status)
+        $teams = \App\Models\Board::where(function($q) use ($user) {
+                $q->where('user_id', $user->id)
+                    ->orWhereExists(fn($sub) => $sub->from('board_collaborators')->whereColumn('board_collaborators.board_id','boards.id')->where('board_collaborators.user_id', $user->id));
+        })->latest('updated_at')->take(6)->get();
+
+        return view('dashboard', compact('activities', 'teams', 'activityByHour', 'activityByDay', 'activityByDayLabels', 'activityByMonth', 'activityByMonthLabels', 'recentSessions'));
 })->middleware('auth')->name('dashboard');
 
 use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\Dashboard\PlanningToolsController;
 use App\Http\Controllers\Dashboard\RoadmapController;
+use App\Http\Controllers\Dashboard\ApiManagementController;
 use App\Http\Controllers\Dashboard\CodeRepositoryController;
 use App\Http\Controllers\Dashboard\AccountSettingsController;
 use App\Http\Controllers\Dashboard\PeopleController;
@@ -207,6 +260,26 @@ Route::middleware(['auth'])->prefix('dashboard')->group(function(){
     Route::delete('/code-repository/{repository}/collaborators/{collaborator}', [CodeRepositoryController::class, 'removeCollaborator'])->name('dashboard.code_repository.collaborators.destroy');
 
     Route::patch('/code-repository/tasks/{task}/pr', [CodeRepositoryController::class, 'updatePr'])->name('dashboard.code_repository.tasks.updatePr');
+
+    // API Management
+    Route::get('/api-management', [ApiManagementController::class, 'index'])->name('dashboard.api_management.index');
+    Route::post('/api-management', [ApiManagementController::class, 'store'])->name('dashboard.api_management.store');
+    Route::get('/api-management/{api}', [ApiManagementController::class, 'show'])->name('dashboard.api_management.show');
+    Route::patch('/api-management/{api}', [ApiManagementController::class, 'update'])->name('dashboard.api_management.update');
+    Route::delete('/api-management/{api}', [ApiManagementController::class, 'destroy'])->name('dashboard.api_management.destroy');
+
+    Route::post('/api-management/{api}/endpoints', [ApiManagementController::class, 'storeEndpoint'])->name('dashboard.api_management.endpoints.store');
+    Route::patch('/api-management/{api}/endpoints/{endpoint}', [ApiManagementController::class, 'updateEndpoint'])->name('dashboard.api_management.endpoints.update');
+    Route::delete('/api-management/{api}/endpoints/{endpoint}', [ApiManagementController::class, 'destroyEndpoint'])->name('dashboard.api_management.endpoints.destroy');
+
+    Route::post('/api-management/{api}/collections', [ApiManagementController::class, 'storeCollection'])->name('dashboard.api_management.collections.store');
+    Route::delete('/api-management/{api}/collections/{collection}', [ApiManagementController::class, 'destroyCollection'])->name('dashboard.api_management.collections.destroy');
+
+    Route::post('/api-management/{api}/environments', [ApiManagementController::class, 'storeEnvironment'])->name('dashboard.api_management.environments.store');
+    Route::delete('/api-management/{api}/environments/{environment}', [ApiManagementController::class, 'destroyEnvironment'])->name('dashboard.api_management.environments.destroy');
+
+    Route::post('/api-management/{api}/versions', [ApiManagementController::class, 'storeVersion'])->name('dashboard.api_management.versions.store');
+    Route::delete('/api-management/{api}/versions/{version}', [ApiManagementController::class, 'destroyVersion'])->name('dashboard.api_management.versions.destroy');
 
     // Activity feed
     Route::get('/activity', function () {

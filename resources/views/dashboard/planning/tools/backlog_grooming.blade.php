@@ -198,7 +198,7 @@
     </style>
 
     <div id="backlog-page" class="backlog-page pt-8 px-6 pb-20 text-white">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-screen-2xl mx-auto">
             
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
                 <div class="flex-1">

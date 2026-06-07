@@ -51,7 +51,7 @@
 
 <div class="bg-gestdev-main min-h-screen text-white">
     <nav class="fixed top-0 w-full z-50 px-6 py-5">
-        <div class="max-w-7xl mx-auto glass rounded-2xl px-6 py-3 flex items-center justify-between transition-all duration-500 hover:border-white/20">
+        <div class="max-w-screen-2xl mx-auto glass rounded-2xl px-6 py-3 flex items-center justify-between transition-all duration-500 hover:border-white/20">
             <div class="flex items-center space-x-2 group cursor-pointer" onclick="window.location='/'">
                 <div class="w-9 h-9 bg-gradient-to-br from-[#0D00A4] to-[#22007C] rounded-xl rotate-12 group-hover:rotate-0 transition-all duration-500 shadow-[0_0_20px_rgba(13,0,164,0.4)] flex items-center justify-center font-bold text-lg">G</div>
                 <span class="font-black text-2xl tracking-tighter uppercase italic">GestDev</span>
@@ -108,7 +108,7 @@
     </header>
 
     <section id="about" class="py-32 px-6 border-t border-white/5">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-screen-2xl mx-auto">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 <div class="animate-float">
                     <div class="glass p-8 rounded-[3rem] border-white/10 relative">
@@ -182,7 +182,7 @@
     </section>
 
     <footer class="pt-32 pb-12 px-6 border-t border-white/5 bg-[#02010A]">
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-screen-2xl mx-auto">
             <div class="flex flex-col md:flex-row justify-between items-start mb-24 space-y-12 md:space-y-0">
                 <div class="max-w-xs">
                     <div class="flex items-center space-x-2 mb-6">

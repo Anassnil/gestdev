@@ -275,6 +275,9 @@
         [data-theme="light"] .text-amber-300 { color: #B45309 !important; }
         [data-theme="light"] .text-rose-300 { color: #BE123C !important; }
         [data-theme="light"] .text-cyan-300 { color: #0E7490 !important; }
+        [data-theme="light"] .border-emerald-500\/30 { border-color: rgba(16, 185, 129, 0.40) !important; }
+        [data-theme="light"] .from-emerald-600\/20 { --tw-gradient-from: rgba(5, 150, 105, 0.12) !important; }
+        [data-theme="light"] .to-teal-600\/20    { --tw-gradient-to:   rgba(13, 148, 136, 0.12) !important; }
 
         [data-theme="light"] .bg-blue-600\/20 { background-color: #DBEAFE !important; }
         [data-theme="light"] .bg-violet-600\/20 { background-color: #EDE9FE !important; }
@@ -289,6 +292,59 @@
         [data-theme="light"] .border-amber-500\/30 { border-color: #FCD34D !important; }
         [data-theme="light"] .border-rose-500\/30 { border-color: #FDA4AF !important; }
         [data-theme="light"] .border-cyan-500\/30 { border-color: #67E8F9 !important; }
+
+        /* ── Light Mode Indigo / Violet Fixes ──────────────────────── */
+        [data-theme="light"] .text-indigo-200  { color: #4338ca !important; }
+        [data-theme="light"] .text-indigo-300  { color: #4f46e5 !important; }
+        [data-theme="light"] .text-indigo-400  { color: #4f46e5 !important; }
+        [data-theme="light"] .text-indigo-400\/70 { color: rgba(67, 56, 202, 0.80) !important; }
+        [data-theme="light"] .text-violet-200  { color: #6d28d9 !important; }
+        [data-theme="light"] .text-violet-400  { color: #7c3aed !important; }
+        [data-theme="light"] .bg-indigo-600\/20 { background-color: rgba(99, 102, 241, 0.10) !important; }
+        [data-theme="light"] .bg-indigo-500\/20 { background-color: rgba(99, 102, 241, 0.10) !important; }
+        [data-theme="light"] .bg-indigo-500\/40 { background-color: rgba(99, 102, 241, 0.20) !important; }
+        [data-theme="light"] .border-indigo-500\/30 { border-color: rgba(99, 102, 241, 0.40) !important; }
+        [data-theme="light"] .border-indigo-400\/30 { border-color: rgba(99, 102, 241, 0.30) !important; }
+        [data-theme="light"] .border-indigo-400\/60 { border-color: rgba(99, 102, 241, 0.60) !important; }
+        /* ── Light Mode — Flash alerts ────────────────────────── */
+        [data-theme="light"] .flash-success {
+            background: #DCFCE7 !important;
+            border-color: #16A34A !important;
+            color: #14532D !important;
+        }
+        [data-theme="light"] .flash-error {
+            background: #FEE2E2 !important;
+            border-color: #DC2626 !important;
+            color: #7F1D1D !important;
+        }
+
+        /* ── Light Mode — Branch action buttons ─────────────────── */
+        [data-theme="light"] .branch-btn-default {
+            background: #F1F5F9 !important; border-color: #CBD5E1 !important;
+            color: #334155 !important;
+        }
+        [data-theme="light"] .branch-btn-default:hover { background: #E2E8F0 !important; }
+        [data-theme="light"] .branch-btn-protect {
+            background: #FEF9C3 !important; border-color: #CA8A04 !important;
+            color: #854D0E !important;
+        }
+        [data-theme="light"] .branch-btn-protect:hover { background: #FEF08A !important; }
+        [data-theme="light"] .branch-btn-delete {
+            background: #FEE2E2 !important; border-color: #DC2626 !important;
+            color: #991B1B !important;
+        }
+        [data-theme="light"] .branch-btn-delete:hover { background: #FECACA !important; }
+
+        /* Back-button gradient + glow overrides for light mode */
+        [data-theme="light"] .back-repo-btn {
+            background: linear-gradient(to right, rgba(99,102,241,0.10), rgba(124,58,237,0.10)) !important;
+            border-color: rgba(99, 102, 241, 0.35) !important;
+        }
+        [data-theme="light"] .back-repo-btn:hover {
+            background: linear-gradient(to right, rgba(99,102,241,0.18), rgba(124,58,237,0.18)) !important;
+            border-color: rgba(99, 102, 241, 0.55) !important;
+            box-shadow: 0 0 18px rgba(99, 102, 241, 0.18) !important;
+        }
 
         /* ── Light Mode — Open Planning button ───────────────────── */
         [data-theme="light"] a.bg-white { background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; }
@@ -518,6 +574,7 @@
             .p-5 {
                 padding: 1rem !important;
             }
+        }
 
             .p-4 {
                 padding: 0.75rem !important;

@@ -2,7 +2,7 @@
 
 @section('dashboard-content')
 <div class="pt-6 sm:pt-12 px-2 sm:px-6 pb-20">
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-screen-2xl mx-auto">
 
         {{-- ── Header ─────────────────────────────────────────────────────────── --}}
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">

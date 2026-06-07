@@ -6,11 +6,26 @@
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
                 <h1 class="text-3xl md:text-4xl font-black text-white">Code Repository</h1>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function(){
+                        const openBtns = document.querySelectorAll('.openCreateRepo');
+                        const modal = document.getElementById('createRepoModal');
+                        const overlay = document.getElementById('createRepoOverlay');
+                        const closeBtn = document.getElementById('closeCreateRepo');
+                        const cancelBtn = document.getElementById('cancelCreateRepo');
+
+                        function show() { if (modal) { modal.classList.remove('hidden'); document.body.classList.add('overflow-hidden'); } }
+                        function hide() { if (modal) { modal.classList.add('hidden'); document.body.classList.remove('overflow-hidden'); } }
+
+                        if (openBtns && openBtns.length) openBtns.forEach(b => b.addEventListener('click', show));
+                        if (closeBtn) closeBtn.addEventListener('click', hide);
+                        if (cancelBtn) cancelBtn.addEventListener('click', hide);
+                        if (overlay) overlay.addEventListener('click', hide);
+                        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') hide(); });
+                    });
+                </script>
                 <p class="text-white/60 mt-2">Phase 1 foundation: repositories, branches, collaborators, and PR linking.</p>
             </div>
-            <a href="{{ route('dashboard.planning.index') }}" class="px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-sm md:text-base">
-                Back to Planning
-            </a>
         </div>
 
         @if(session('success'))
@@ -29,57 +44,38 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-            <div class="glass rounded-2xl p-4 border border-white/10">
-                <div class="text-white/60 text-xs uppercase tracking-wide">Repositories</div>
-                <div class="text-3xl font-black text-white mt-2">{{ $stats['repositories_total'] }}</div>
-            </div>
-            <div class="glass rounded-2xl p-4 border border-white/10">
-                <div class="text-white/60 text-xs uppercase tracking-wide">Public / Private</div>
-                <div class="text-3xl font-black text-blue-400 mt-2">{{ $stats['repositories_public'] }} / {{ $stats['repositories_private'] }}</div>
-            </div>
-            <div class="glass rounded-2xl p-4 border border-white/10">
-                <div class="text-white/60 text-xs uppercase tracking-wide">Branches Total</div>
-                <div class="text-3xl font-black text-green-400 mt-2">{{ $stats['branches_total'] }}</div>
-            </div>
-            <div class="glass rounded-2xl p-4 border border-white/10">
-                <div class="text-white/60 text-xs uppercase tracking-wide">Tasks With PR</div>
-                <div class="text-3xl font-black text-white mt-2">{{ $stats['with_pr'] }}</div>
-            </div>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-start">
+            <div class="lg:col-span-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="glass rounded-2xl p-4 border border-white/10">
+                        <div class="text-white/60 text-xs uppercase tracking-wide">Repositories</div>
+                        <div class="text-3xl font-black text-white mt-2">{{ $stats['repositories_total'] }}</div>
+                    </div>
+                    <div class="glass rounded-2xl p-4 border border-white/10">
+                        <div class="text-white/60 text-xs uppercase tracking-wide">Public / Private</div>
+                        <div class="text-3xl font-black text-blue-400 mt-2">{{ $stats['repositories_public'] }} / {{ $stats['repositories_private'] }}</div>
+                    </div>
+                    <div class="glass rounded-2xl p-4 border border-white/10">
+                        <div class="text-white/60 text-xs uppercase tracking-wide">Branches Total</div>
+                        <div class="text-3xl font-black text-green-400 mt-2">{{ $stats['branches_total'] }}</div>
+                    </div>
+                    <div class="glass rounded-2xl p-4 border border-white/10">
+                        <div class="text-white/60 text-xs uppercase tracking-wide">Tasks With PR</div>
+                        <div class="text-3xl font-black text-white mt-2">{{ $stats['with_pr'] }}</div>
+                    </div>
+                </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-            <div class="glass rounded-2xl p-4 md:p-6 border border-white/10 xl:col-span-1">
-                <h2 class="text-white text-xl font-bold mb-4">Create Repository</h2>
-                <form method="POST" action="{{ route('dashboard.code_repository.store') }}" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label class="text-white/60 text-xs uppercase tracking-wide">Name</label>
-                        <input type="text" name="name" required class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500" placeholder="Core API">
-                    </div>
-                    <div>
-                        <label class="text-white/60 text-xs uppercase tracking-wide">Slug (optional)</label>
-                        <input type="text" name="slug" class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500" placeholder="core-api">
-                    </div>
-                    <div>
-                        <label class="text-white/60 text-xs uppercase tracking-wide">Visibility</label>
-                        <select name="visibility" class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500">
-                            <option value="private" class="bg-[#01020a]">Private</option>
-                            <option value="public" class="bg-[#01020a]">Public</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-white/60 text-xs uppercase tracking-wide">Description</label>
-                        <textarea name="description" rows="3" class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500" placeholder="Repository purpose..."></textarea>
-                    </div>
-                    <button type="submit" class="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all">
-                        Create Repository
-                    </button>
-                </form>
             </div>
 
-            <div class="glass rounded-2xl p-4 md:p-6 border border-white/10 xl:col-span-2">
-                <h2 class="text-white text-xl font-bold mb-4">Repositories</h2>
+            <div class="glass rounded-2xl p-4 md:p-6 border border-white/10 lg:col-span-2">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-white text-xl font-bold">Repositories</h2>
+                    <div>
+                        <button type="button" class="openCreateRepo px-3 py-2 bg-blue-600 border border-blue-700 rounded-xl hover:bg-blue-700 transition-all text-sm md:text-base text-white/90">
+                            New Repository
+                        </button>
+                    </div>
+                </div>
 
                 @if($repositories->count() === 0)
                     <div class="rounded-xl border border-white/10 bg-white/5 p-6 text-white/60">
@@ -131,6 +127,45 @@
             </div>
         </div>
 
+        <!-- Create Repository Modal -->
+        <div id="createRepoModal" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div id="createRepoOverlay" class="absolute inset-0 bg-black/60"></div>
+            <div class="relative max-w-2xl w-full bg-[#01020a] rounded-2xl border border-white/10 p-6 glass">
+                <div class="flex items-start justify-between">
+                    <h3 class="text-white text-lg font-bold">Create Repository</h3>
+                    <button id="closeCreateRepo" class="text-white/60 hover:text-white">✕</button>
+                </div>
+
+                <form method="POST" action="{{ route('dashboard.code_repository.store') }}" class="mt-4 space-y-4">
+                    @csrf
+                    <div>
+                        <label class="text-white/60 text-xs uppercase tracking-wide">Name</label>
+                        <input type="text" name="name" required class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500" placeholder="Core API">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-xs uppercase tracking-wide">Slug (optional)</label>
+                        <input type="text" name="slug" class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500" placeholder="core-api">
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-xs uppercase tracking-wide">Visibility</label>
+                        <select name="visibility" class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500">
+                            <option value="private" class="bg-[#01020a]">Private</option>
+                            <option value="public" class="bg-[#01020a]">Public</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-white/60 text-xs uppercase tracking-wide">Description</label>
+                        <textarea name="description" rows="3" class="mt-1 w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none focus:border-blue-500" placeholder="Repository purpose..."></textarea>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <button type="button" id="cancelCreateRepo" class="px-4 py-2 rounded-lg bg-white/5 text-white/70 hover:bg-white/10">Cancel</button>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold">Create Repository</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
         <div class="glass rounded-2xl p-4 md:p-6 border border-white/10">
             <h2 class="text-white text-xl font-bold mb-4">Task PR Links (Compatibility Panel)</h2>
 
@@ -174,7 +209,7 @@
                                                 name="pr_url"
                                                 value="{{ old('pr_url', $task->pr_url) }}"
                                                 placeholder="https://github.com/org/repo/pull/123"
-                                                class="w-full min-w-[320px] px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-blue-500"
+                                                class="w-48 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:border-blue-500"
                                             >
                                     </td>
                                     <td class="py-3">
