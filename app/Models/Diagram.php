@@ -9,7 +9,7 @@ class Diagram extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['board_id','type','title','image','code','description','created_by','updated_by'];
+    protected $fillable = ['board_id','type','title','image','pdf','code','description','created_by','updated_by'];
 
     public function creator()
     {

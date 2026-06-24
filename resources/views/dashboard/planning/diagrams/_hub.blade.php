@@ -36,6 +36,7 @@
     {{-- AI Suggestions moved to popup modal; opened via header button --}}
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 hub-grid">
+        <div id="diagram-error-banner" class="col-span-full hidden p-4 rounded-lg bg-red-900 text-white text-sm font-semibold">An internal error occurred — open the browser console for details.</div>
         @forelse($diagrams as $index => $diagram)
             <div id="diagram-card-{{ $diagram->id }}" 
                  class="diagram-card p-5 hub-glass rounded-[2rem] group cursor-pointer" 
@@ -45,6 +46,7 @@
                   data-type="{{ $diagram->type }}" 
                   data-code="{{ htmlspecialchars($diagram->code ?? '', ENT_QUOTES) }}" 
                   data-image="{{ $diagram->image }}"
+                  data-pdf="{{ $diagram->pdf }}"
                   data-description="{{ htmlspecialchars($diagram->description ?? '', ENT_QUOTES) }}">
                 
                 <div class="diagram-image-wrapper mb-4 bg-black/20 rounded-2xl h-44 overflow-hidden relative">
@@ -58,6 +60,11 @@
                             {{ $diagram->type }}
                         </span>
                     </div>
+                    @if($diagram->pdf)
+                        <div class="absolute top-3 right-3">
+                            <span class="px-2 py-1 bg-red-700/60 text-[9px] font-bold text-white rounded-md">PDF</span>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="px-1">
@@ -122,6 +129,18 @@
                                 <input type="file" name="image" id="diagram-image-inline" accept="image/*" class="hidden" />
                             </div>
                             <button id="diagram-change-image-btn" type="button" class="absolute top-3 right-3 hidden bg-white/90 text-black px-3 py-1 rounded-md shadow text-xs">Change</button>
+                        </div>
+
+                        <div class="mt-2 flex flex-wrap items-center gap-3">
+                            <label for="diagram-pdf-inline" class="px-4 py-2 rounded-lg bg-slate-800 text-white text-sm ring-1 ring-white/10 hover:bg-slate-700 transition-all duration-200 cursor-pointer">Upload PDF</label>
+                            <button id="diagram-pdf-open-btn" type="button" class="ml-0 sm:ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all duration-200 ease-out transform hover:-translate-y-0.5 hover:from-blue-500 hover:to-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-950 active:scale-[0.98] hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14M19 12H5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <span>Open PDF</span>
+                            </button>
+                            <span id="diagram-pdf-file-name" class="sr-only">No PDF uploaded</span>
+                            <input type="file" name="pdf" id="diagram-pdf-inline" accept="application/pdf" class="hidden" />
                         </div>
 
                         <div class="space-y-4">
@@ -362,6 +381,18 @@ document.addEventListener('DOMContentLoaded', function(){
     const aiCloseBtn = document.getElementById('ai-close-btn');
     const aiCancelBtn = document.getElementById('ai-cancel-btn');
 
+    // If any uncaught JS error occurs, reveal the page to avoid invisible UI.
+    function revealPageOnError(e){
+        console.error('DiagramHub caught global error:', e);
+        try{ const page = document.getElementById('diagrams-page'); if(page) page.classList.add('is-ready'); }catch(_){}
+        try{
+            const banner = document.getElementById('diagram-error-banner');
+            if(banner){ banner.classList.remove('hidden'); banner.textContent = 'Diagram Hub script error: ' + (e && e.message ? e.message : String(e)); }
+        }catch(_){ }
+    }
+    window.addEventListener('error', revealPageOnError);
+    window.addEventListener('unhandledrejection', revealPageOnError);
+
     // Ensure Prism is present and allow dynamic theme switching
     let _prismThemeLink = null;
     function setPrismTheme(dark = true){
@@ -394,6 +425,7 @@ document.addEventListener('DOMContentLoaded', function(){
             #diagram-editor-container.editor-light .border-r{ border-color:rgba(0,0,0,0.04); }
             #diagram-editor-container.editor-light textarea{ color:#0b1220; background:transparent; }
             #diagram-editor-container.editor-light .px-4{ color:#0b1220; }
+            body.editor-light-mode #diagram-pdf-open-btn:not(.hidden){ background: linear-gradient(to right, #1e40af, #1e3a8a) !important; color: #ffffff !important; }
         `;
         document.head.appendChild(_editorLightStyle);
     }catch(e){ /* ignore */ }
@@ -410,6 +442,8 @@ document.addEventListener('DOMContentLoaded', function(){
         document.getElementById('diagram-description-inline').value = data.description || '';
         
         const previewImg = document.getElementById('diagram-image-preview-img');
+        const pdfNameEl = document.getElementById('diagram-pdf-file-name');
+        const pdfOpenBtn = document.getElementById('diagram-pdf-open-btn');
         const codeInput = document.getElementById('diagram-code-inline');
         const codePreview = document.getElementById('diagram-code-preview');
         const codeEl = document.getElementById('diagram-code-preview-code');
@@ -419,6 +453,16 @@ document.addEventListener('DOMContentLoaded', function(){
         const changeBtn = document.getElementById('diagram-change-image-btn');
 
         previewImg.src = data.image ? `/storage/${data.image}` : '';
+        if(pdfNameEl) pdfNameEl.textContent = data.pdf ? String(data.pdf).split('/').pop() : 'No PDF uploaded';
+        if(pdfOpenBtn){
+            if(data.pdf){
+                pdfOpenBtn.classList.remove('hidden');
+                pdfOpenBtn.onclick = () => window.open(`/storage/${data.pdf}`, '_blank');
+            } else {
+                pdfOpenBtn.classList.add('hidden');
+                pdfOpenBtn.onclick = null;
+            }
+        }
         
         if(isView) {
             codeInput.classList.add('hidden');
@@ -469,7 +513,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 title: dataCard.getAttribute('data-title'),
                 type: dataCard.getAttribute('data-type'),
                 code: dataCard.getAttribute('data-code'),
-                image: dataCard.getAttribute('data-image')
+                image: dataCard.getAttribute('data-image'),
+                pdf: dataCard.getAttribute('data-pdf'),
+                description: dataCard.getAttribute('data-description')
             });
         }
         
@@ -482,7 +528,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 title: dataCard.getAttribute('data-title'),
                 type: dataCard.getAttribute('data-type'),
                 code: dataCard.getAttribute('data-code'),
-                image: dataCard.getAttribute('data-image')
+                image: dataCard.getAttribute('data-image'),
+                pdf: dataCard.getAttribute('data-pdf'),
+                description: dataCard.getAttribute('data-description')
             });
         }
     });
@@ -601,8 +649,21 @@ document.addEventListener('DOMContentLoaded', function(){
     editorThemeToggle && editorThemeToggle.addEventListener('click', () => {
         editorIsLight = !editorIsLight;
         editorContainer.classList.toggle('editor-light', editorIsLight);
+        document.body.classList.toggle('editor-light-mode', editorIsLight);
         setPrismTheme(!editorIsLight ? true : false);
         updateEditorThemeButton();
+        
+        // Update PDF button styling for light/dark mode
+        const pdfOpenBtn = document.getElementById('diagram-pdf-open-btn');
+        if(pdfOpenBtn){
+            if(editorIsLight){
+                pdfOpenBtn.style.backgroundColor = '#1e40af';
+                pdfOpenBtn.style.backgroundImage = 'linear-gradient(to right, #1e40af, #1e3a8a)';
+            } else {
+                pdfOpenBtn.style.backgroundColor = '';
+                pdfOpenBtn.style.backgroundImage = '';
+            }
+        }
     });
 
     editorCopyBtn && editorCopyBtn.addEventListener('click', () => {
@@ -952,6 +1013,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // File input change -> preview selected image immediately
     const imageInput = document.getElementById('diagram-image-inline');
+    const pdfInput = document.getElementById('diagram-pdf-inline');
     if(imageInput){
         imageInput.addEventListener('change', function(){
             if(this.files && this.files[0]){
@@ -991,6 +1053,24 @@ document.addEventListener('DOMContentLoaded', function(){
                 try { imageInput.click(); } catch(err){}
             });
         }
+    }
+
+    if(pdfInput){
+        pdfInput.addEventListener('change', function(){
+            if(this.files && this.files[0]){
+                const file = this.files[0];
+                const fileNameEl = document.getElementById('diagram-pdf-file-name');
+                const pdfOpenBtn = document.getElementById('diagram-pdf-open-btn');
+                if(fileNameEl) fileNameEl.textContent = file.name;
+                if(pdfOpenBtn){
+                    const url = URL.createObjectURL(file);
+                    pdfOpenBtn.classList.remove('hidden');
+                    pdfOpenBtn.onclick = () => window.open(url, '_blank');
+                }
+                const previewImg = document.getElementById('diagram-image-preview-img');
+                if(previewImg) previewImg.src = '';
+            }
+        });
     }
 
     const closeX = document.getElementById('diagram-close-x');

@@ -45,12 +45,16 @@ class DiagramHubController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'code' => 'nullable|string',
-            'image' => 'nullable|image|max:5120'
+            'image' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:5120',
+            'pdf' => 'nullable|file|mimes:pdf|max:5120'
         ]);
 
-        $path = null;
+        $imgPath = null; $pdfPath = null;
         if($request->hasFile('image')){
-            $path = $request->file('image')->store('diagrams', 'public');
+            $imgPath = $request->file('image')->store('diagrams', 'public');
+        }
+        if($request->hasFile('pdf')){
+            $pdfPath = $request->file('pdf')->store('diagrams', 'public');
         }
 
         // Idempotency guard: if a diagram with the same title was created very
@@ -69,7 +73,8 @@ class DiagramHubController extends Controller
             'board_id' => $board->id,
             'type' => $data['type'] ?? 'uml',
             'title' => $data['title'],
-            'image' => $path,
+            'image' => $imgPath,
+            'pdf' => $pdfPath,
             'code' => $data['code'] ?? null,
             'description' => $data['description'] ?? null,
             'created_by' => auth()->id(),
@@ -85,11 +90,21 @@ class DiagramHubController extends Controller
         if (! auth()->user() || ! $board->canEdit(auth()->user())) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
-        $data = $request->validate(['type' => 'nullable|string|max:50','title' => 'nullable|string|max:255','description' => 'nullable|string|max:1000','code' => 'nullable|string','image' => 'nullable|image|max:5120']);
+        $data = $request->validate([
+            'type' => 'nullable|string|max:50',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'code' => 'nullable|string',
+            'image' => 'nullable|file|mimes:jpeg,jpg,png,gif|max:5120',
+            'pdf' => 'nullable|file|mimes:pdf|max:5120'
+        ]);
         if($request->hasFile('image')){
-            // delete old image
             if($diagram->image) Storage::disk('public')->delete($diagram->image);
             $diagram->image = $request->file('image')->store('diagrams','public');
+        }
+        if($request->hasFile('pdf')){
+            if($diagram->pdf) Storage::disk('public')->delete($diagram->pdf);
+            $diagram->pdf = $request->file('pdf')->store('diagrams','public');
         }
         if(isset($data['title'])) $diagram->title = $data['title'];
         if(isset($data['type'])) $diagram->type = $data['type'];
@@ -107,6 +122,7 @@ class DiagramHubController extends Controller
             return response()->json(['error' => 'Forbidden'], 403);
         }
         if($diagram->image) Storage::disk('public')->delete($diagram->image);
+        if($diagram->pdf) Storage::disk('public')->delete($diagram->pdf);
         $diagram->delete();
         return response()->json(['ok' => true]);
     }

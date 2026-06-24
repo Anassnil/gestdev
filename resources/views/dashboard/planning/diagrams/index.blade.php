@@ -75,9 +75,14 @@
     [data-theme="light"] #diagram-modal-inline .text-white\/20,
     [data-theme="light"] #diagram-modal-inline .text-white\/30,
     [data-theme="light"] #diagram-modal-inline .text-white\/40 { color: rgba(31,41,55,0.45) !important; }
-    [data-theme="light"] #diagram-modal-inline .text-white\/80 { color: rgba(31,41,55,0.80) !important; }
+    [data-theme="light"] #diagram-modal-inline .text-white/80 { color: rgba(31,41,55,0.80) !important; }
     [data-theme="light"] #diagram-modal-inline .text-white { color: var(--lm-text) !important; }
-    [data-theme="light"] #diagram-modal-inline .border-white\/10 { border-color: var(--lm-border) !important; }
+    [data-theme="light"] #diagram-modal-inline .border-white/10 { border-color: var(--lm-border) !important; }
+    [data-theme="light"] #diagram-modal-inline label[for="diagram-pdf-inline"] { background: #f1f5f9 !important; color: #1f2937 !important; border: 1px solid rgba(31, 41, 55, 0.15) !important; transition: all 0.2s ease !important; }
+    [data-theme="light"] #diagram-modal-inline label[for="diagram-pdf-inline"]:hover { background: #e2e8f0 !important; }
+    [data-theme="light"] #diagram-modal-inline #diagram-pdf-open-btn { background: linear-gradient(to right, #2563eb, #1d4ed8) !important; color: #ffffff !important; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important; border: none !important; transition: all 0.2s ease !important; }
+    [data-theme="light"] #diagram-modal-inline #diagram-pdf-open-btn:hover { background: linear-gradient(to right, #1d4ed8, #1e40af) !important; }
+    [data-theme="light"] #diagram-modal-inline #diagram-save-inline { color: #ffffff !important; }
     [data-theme="light"] #diagram-code-preview { background: #f3f4f6 !important; color: #1F2937 !important; }
     [data-theme="light"] #ai-suggest-modal > div { background: #ffffff !important; border-color: var(--lm-border) !important; }
     [data-theme="light"] #ai-prompt { background: #ffffff !important; border-color: var(--lm-border) !important; color: var(--lm-text) !important; }
